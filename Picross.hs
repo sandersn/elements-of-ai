@@ -4,6 +4,7 @@ data Axis = Horizontal | Vertical
 type Pattern = [Specifier]
 type Row = [Pix]
 type Puzzle = [Row] -- TODO: probably not right
+type Rowset = [Row] -- should be fine
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
 constrain :: [Row] -> Row -> [Row]
 constrain = undefined
@@ -24,9 +25,25 @@ step through each candidate rowset:
   stop when all rows [all cells] in the puzzle have no unknown cells
   (or when a complete cycle fails to make a changeto the puzzle)
 -}
-loop = undefined
+finished :: Puzzle -> Bool
+finished = all $ all (/=Unknown)
+allRows :: Puzzle -> [Row]
+allRows puzzle = rows ++ columns
+  where rows = puzzle
+        columns = [map (!!i) puzzle | i <- [0..length (head puzzle) - 1]]
+solve :: [Pattern] -> Puzzle
+solve patterns height width = loop candidates newPuzzle
+  where newPuzzle = [[Unknown | j <- [0..height - 1]] | i <- [0..width -1]]
+        candidates = map (generate height width) (zip patterns [0..])
+loop candidates puzzle =
+  if finished puzzle
+  then puzzle
+  else 
 -- TODO: It's possible to optimize `expand` by passing in an existing row as constraint
 -- but consuming a row is a lot harder than consuming an integer
+generate :: Int -> Int -> (Int, Pattern) -> [Row]
+generate height width (i, pattern) =
+  expand pattern (if i < height then height else width)
 expand :: Pattern -> Int -> [Row]
 expand [] 0 = return []
 expand [] _ = mzero
