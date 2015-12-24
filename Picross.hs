@@ -1,9 +1,30 @@
 import Control.Monad (mzero)
-data Pix = Black | White deriving (Show, Eq)
+data Pix = Black | White | Unknown deriving (Show, Eq)
+data Axis = Horizontal | Vertical
 type Pattern = [Specifier]
 type Row = [Pix]
+type Puzzle = [Row] -- TODO: probably not right
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
-
+constrain :: [Row] -> Row -> [Row]
+constrain = undefined
+infer :: [Row] -> Row
+infer = undefined
+-- TODO: probably this should be wrapped in State instead
+readRow :: Axis -> Int -> Puzzle -> Row
+readRow = undefined
+writeRow :: Axis -> Int -> Row -> Puzzle -> Puzzle
+writeRow = undefined
+{-
+step through each candidate rowset:
+  read mtaching row
+  skip if it has no unknown cells
+  remove candidates that do not match row
+  infer new row based on candidates
+  write new row [if it has changed from the matching row]
+  stop when all rows [all cells] in the puzzle have no unknown cells
+  (or when a complete cycle fails to make a changeto the puzzle)
+-}
+loop = undefined
 -- TODO: It's possible to optimize `expand` by passing in an existing row as constraint
 -- but consuming a row is a lot harder than consuming an integer
 expand :: Pattern -> Int -> [Row]
