@@ -11,7 +11,7 @@ type Puzzle = [Row]
 type Rowset = [Row] -- should be fine
 -- stored as [RowCandidates] ++ [ColCandidates]
 -- maybe ([RowCandidates], [ColCandidates]) would be better
-type CandidateSet = [Rowset]
+type Candidateset = [Rowset]
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
 constrain :: [Row] -> Row -> [Row]
 constrain = undefined
@@ -20,7 +20,7 @@ infer = undefined
 -- TODO: probably this should be wrapped in State instead
 readRow :: Int -> Puzzle -> Row
 readRow i puzzle = if i < len then puzzle !! i else map (!!i - len) puzzle
-  when len = length puzzle
+  where len = length puzzle
 writeRow :: Int -> Row -> Puzzle -> Puzzle
 writeRow = undefined
 {-
@@ -40,16 +40,21 @@ allRows puzzle = rows ++ columns
   where rows = puzzle
         columns = [map (!!i) puzzle | i <- [0..length (head puzzle) - 1]]
 solve :: [Pattern] -> Int -> Int -> Puzzle
-solve patterns height width = loop candidates newPuzzle
+solve patterns height width = loop (candidates, newPuzzle)
   where newPuzzle = [[Unknown | j <- [0..height - 1]] | i <- [0..width -1]]
-        candidates = map (generate height width) (zip patterns [0..])
-loop candidates puzzle =
+        candidates = map (generate height width) (zip [0..] patterns)
+loop :: (Candidateset, Puzzle) -> Puzzle
+loop (candidates, puzzle) =
   if finished puzzle
   then puzzle
   -- ugh. I have to remember how to use State here
   -- then turn map into mapM
-  else loop (map (loopBody puzzle) (zip candidates [0..])) puzzle
+  else loop (map (loopBody puzzle) (zip candidates [0..]), puzzle)
 -- disabled until I can either wrap in State or write it myself
+-- alternatively, I could infer the new puzzle from the returned rowsets
+-- but I think it's more correct to update the puzzle incrementally
+-- (I'm not sure how to combine row vs column inferences in a batched way)
+loopBody :: Puzzle -> (Rowset, Int) -> Rowset -- (Rowset, Puzzle)
 loopBody puzzle (rowset, i) = undefined
 --loopBody puzzle (rowset, i) = (newSet, writeRow i newRow puzzle)
 --  where newSet = constrain rowset (readRow i puzzle)
