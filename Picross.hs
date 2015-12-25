@@ -41,7 +41,7 @@ allRows puzzle = rows ++ columns
         columns = [map (!!i) puzzle | i <- [0..length (head puzzle) - 1]]
 solve :: [Pattern] -> Int -> Int -> Puzzle
 solve patterns height width = loop (candidates, newPuzzle)
-  where newPuzzle = [[Unknown | j <- [0..height - 1]] | i <- [0..width -1]]
+  where newPuzzle = [replicate height Unknown | i <- [0..width -1]]
         candidates = map (generate height width) (zip [0..] patterns)
 loop :: (Candidateset, Puzzle) -> Puzzle
 loop (candidates, puzzle) =
@@ -67,16 +67,30 @@ generate height width (i, pattern) =
 expand :: Pattern -> Int -> [Row]
 expand [] 0 = return []
 expand [] _ = mzero
-expand (Num i:pattern) n | i <= n = map (expansion++) (expand pattern (n - i))
-  where expansion = [Black | _ <- [0..i - 1]]
+expand (Num i:pattern) n | i <= n = map (replicate i Black ++) (expand pattern (n - i))
+  where expansion = replicate i Black
 expand (Num i:pattern) n = mzero 
-expand (Star:[]) n = return [White | _ <- [0..n - 1]]
-expand (Star:pattern) n = return [] -- TODO: Write expansion for Plus and Star
+expand (Star:[]) n = return $ replicate n White
+expand (Star:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [0..n - 1]]
 expand (Plus:pattern) 0 = mzero 
-expand (Plus:[]) n = return [White | _ <- [0..n - 1]]
-expand (Plus:pattern) n = return [White] -- TODO: Write expansion for Plus and Star
+expand (Plus:[]) n = return $ replicate n White
+expand (Plus:pattern) 0 = mzero
+expand (Plus:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [1..n - 1]]
+main = do
+  putStrLn "\t*** Testing `expand` ***"
+  testExpand [] 0 [[]] 
+  testExpand [] 12 []
+  testExpand [Num 2] 2 [[Black, Black]]
+  testExpand [Num 2, Num 2] 4 [[Black, Black, Black, Black]]
+  testExpand [Num 2, Star] 2 [[Black, Black]]
+  testExpand [Num 2, Star] 4 [[Black, Black, White, White]]
+  testExpand [Star] 2 [[White, White]]
+  testExpand [Star, Num 2] 4 [[White, White, Black, Black]]
+  testExpand [Star, Num 2, Star] 4 [[Black, Black, White, White],
+                                    [White, Black, Black, White],
+                                    [White, White, Black, Black]]
 
-test input length expected = do
+testExpand input length expected = do
   let actual = expand input length
   if actual == expected
   then putStrLn ("success for " ++ show input)
@@ -89,12 +103,3 @@ test input length expected = do
     putStr "\texpected: "
     print expected
 
-main = do
-  putStrLn "\t*** Testing `expand` ***"
-  test [] 0 [[]] 
-  test [] 12 []
-  test [Num 2] 2 [[Black, Black]]
-  test [Num 2, Num 2] 4 [[Black, Black, Black, Black]]
-  test [Num 2, Star] 2 [[Black, Black]]
-  test [Num 2, Star] 4 [[Black, Black, White, White]]
-  test [Star] 2 [[White, White]]
