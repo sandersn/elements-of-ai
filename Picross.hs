@@ -68,7 +68,7 @@ expand :: Pattern -> Int -> [Row]
 expand [] 0 = return []
 expand [] _ = mzero
 expand (Num i:pattern) n | i <= n = map (expansion++) (expand pattern (n - i))
-  where expansion = [Black | _ <- [0..n - 1]]
+  where expansion = [Black | _ <- [0..i - 1]]
 expand (Num i:pattern) n = mzero 
 expand (Star:[]) n = return [White | _ <- [0..n - 1]]
 expand (Star:pattern) n = return [] -- TODO: Write expansion for Plus and Star
@@ -78,15 +78,19 @@ expand (Plus:pattern) n = return [White] -- TODO: Write expansion for Plus and S
 
 test input length expected = do
   let actual = expand input length
-  putStr "\n\tinput: "
-  print input
-  putStr "\tactual: "
-  print actual
-  putStr "\texpected: "
-  print expected
-  if actual == expected then putStrLn "success" else putStrLn " !!! FAIL !!!"
+  if actual == expected
+  then putStrLn ("success for " ++ show input)
+  else do
+    putStrLn " !!! FAIL !!!"
+    putStr "\tinput: "
+    print input
+    putStr "\tactual: "
+    print actual
+    putStr "\texpected: "
+    print expected
 
 main = do
+  putStrLn "\t*** Testing `expand` ***"
   test [] 0 [[]] 
   test [] 12 []
   test [Num 2] 2 [[Black, Black]]
