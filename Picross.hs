@@ -67,13 +67,15 @@ generate height width (i, pattern) =
 expand :: Pattern -> Int -> [Row]
 expand [] 0 = return []
 expand [] _ = mzero
-expand (Num i:pattern) n | i <= n = map (replicate i Black ++) (expand pattern (n - i))
-  where expansion = replicate i Black
+expand (Num i:pattern) n | i <= n = expand' pattern Black n i
 expand (Num i:pattern) _ = mzero 
 expand (Star:[]) n = return $ replicate n White
-expand (Star:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [0..n - 1]]
+expand (Star:pattern) n = concat [expand' pattern White n i | i <- [0..n - 1]]
 expand (Plus:pattern) 0 = mzero
-expand (Plus:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [1..n]]
+expand (Plus:pattern) n = concat [expand' pattern White n i | i <- [1..n]]
+expand' :: Pattern -> Pix -> Int -> Int -> [Row]
+expand' pattern pix n i = 
+  map (replicate i pix ++) (expand pattern (n - i))
 main = do
   putStrLn "\t*** Testing `expand` ***"
   testExpand [] 0 [[]]
