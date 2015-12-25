@@ -69,16 +69,14 @@ expand [] 0 = return []
 expand [] _ = mzero
 expand (Num i:pattern) n | i <= n = map (replicate i Black ++) (expand pattern (n - i))
   where expansion = replicate i Black
-expand (Num i:pattern) n = mzero 
+expand (Num i:pattern) _ = mzero 
 expand (Star:[]) n = return $ replicate n White
 expand (Star:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [0..n - 1]]
-expand (Plus:pattern) 0 = mzero 
-expand (Plus:[]) n = return $ replicate n White
 expand (Plus:pattern) 0 = mzero
-expand (Plus:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [1..n - 1]]
+expand (Plus:pattern) n = concat [map (replicate i White ++) (expand pattern (n - i)) | i <- [1..n]]
 main = do
   putStrLn "\t*** Testing `expand` ***"
-  testExpand [] 0 [[]] 
+  testExpand [] 0 [[]]
   testExpand [] 12 []
   testExpand [Num 2] 2 [[Black, Black]]
   testExpand [Num 2, Num 2] 4 [[Black, Black, Black, Black]]
@@ -89,6 +87,17 @@ main = do
   testExpand [Star, Num 2, Star] 4 [[Black, Black, White, White],
                                     [White, Black, Black, White],
                                     [White, White, Black, Black]]
+  testExpand [Plus] 0 []
+  testExpand [Plus] 1 [[White]]
+  testExpand [Plus] 2 [[White, White]]
+  testExpand [Num 1, Plus, Num 1] 4 [[Black, White, White, Black]]
+  testExpand [Plus, Num 1, Plus] 4 [[White, Black, White, White],
+                                    [White, White, Black, White]]
+  testExpand [Star, Num 1, Plus, Num 1, Star]
+             4
+             [[Black, White, Black, White],
+              [Black, White, White, Black],
+              [White, Black, White, Black]]
 
 testExpand input length expected = do
   let actual = expand input length
