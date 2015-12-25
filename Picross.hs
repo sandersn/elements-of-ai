@@ -1,5 +1,11 @@
 import Control.Monad (mzero)
 data Pix = Black | White | Unknown deriving (Show, Eq)
+pixEq Unknown _ = True -- (should never happen here)
+pixEq _ Unknown = True
+pixEq Black Black = True
+pixEq White White = True
+pixEq _ _ = False
+
 data Axis = Horizontal | Vertical
 type Pattern = [Specifier]
 type Row = [Pix]
@@ -13,10 +19,7 @@ type Rowset = [Row] -- should be fine
 -- maybe ([RowCandidates], [ColCandidates]) would be better
 type Candidateset = [Rowset]
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
-constrain :: [Row] -> Row -> [Row]
-constrain = undefined
-infer :: [Row] -> Row
-infer = undefined
+a |> f = f a
 -- TODO: probably this should be wrapped in State instead
 readRow :: Int -> Puzzle -> Row
 readRow i puzzle = if i < len then puzzle !! i else map (!!i - len) puzzle
@@ -35,6 +38,8 @@ step through each candidate rowset:
 -}
 finished :: Puzzle -> Bool
 finished = all $ all (/=Unknown)
+finished2 :: Candidateset -> Bool
+finished2 = all $ (==1) . length
 allRows :: Puzzle -> [Row]
 allRows puzzle = rows ++ columns
   where rows = puzzle
@@ -76,6 +81,11 @@ expand (Plus:pattern) n = concat [expand' pattern White n i | i <- [1..n]]
 expand' :: Pattern -> Pix -> Int -> Int -> [Row]
 expand' pattern pix n i = 
   map (replicate i pix ++) (expand pattern (n - i))
+constrain :: Row -> Rowset -> Rowset
+constrain truth = filter rowEq
+  where rowEq row = zip row truth |> all (uncurry pixEq)
+infer :: [Row] -> Row
+infer = undefined
 main = do
   putStrLn "\t*** Testing `expand` ***"
   testExpand [] 0 [[]]
@@ -100,7 +110,43 @@ main = do
              [[Black, White, Black, White],
               [Black, White, White, Black],
               [White, Black, White, Black]]
-
+  putStrLn "\t*** Testing `constrain` ***"
+  testConstrain [Unknown] [] []
+  testConstrain [] [[]] [[]]
+  testConstrain [Unknown] [[Black], [White]] [[Black], [White]]
+  testConstrain [Black] [[Black], [White]] [[Black]]
+  testConstrain [White] [[Black], [White]] [[White]]
+  testConstrain [Black, White, Unknown] [[Black, Black, Black],
+                                         [Black, White, White],
+                                         [Black, White, Black],
+                                         [White, White, White]]
+                                        [[Black, White, White],
+                                         [Black, White, Black]]
+  putStrLn "\t*** Testing `infer` ***"
+testInfer rowset expected = do
+  let actual = infer rowset
+  if actual == expected
+  then putStrLn ("success for " ++ show actual)
+  else do
+    putStrLn " !!! FAIL !!!"
+    putStr "\trowset: "
+    print rowset
+    putStr "\tactual: "
+    print actual
+    putStr "\texpected: "
+    print expected
+testConstrain truth rowset expected = do
+  let actual = constrain truth rowset
+  if actual == expected
+  then putStrLn ("success for " ++ show truth)
+  else do
+    putStrLn " !!! FAIL !!!"
+    putStr "\ttruth: "
+    print truth
+    putStr "\tactual: "
+    print actual
+    putStr "\texpected: "
+    print expected
 testExpand input length expected = do
   let actual = expand input length
   if actual == expected
