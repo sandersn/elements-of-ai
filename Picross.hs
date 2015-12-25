@@ -3,21 +3,29 @@ data Pix = Black | White | Unknown deriving (Show, Eq)
 data Axis = Horizontal | Vertical
 type Pattern = [Specifier]
 type Row = [Pix]
-type Puzzle = [Row] -- TODO: probably not right
+-- Puzzle is stored as a list of rows.
+--  Updating a row is easy - replace the row.
+--  Updating a column means replacing a cell in every row.
+--  There is certainly a better representation out there.
+type Puzzle = [Row]
 type Rowset = [Row] -- should be fine
+-- stored as [RowCandidates] ++ [ColCandidates]
+-- maybe ([RowCandidates], [ColCandidates]) would be better
+type CandidateSet = [Rowset]
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
 constrain :: [Row] -> Row -> [Row]
 constrain = undefined
 infer :: [Row] -> Row
 infer = undefined
 -- TODO: probably this should be wrapped in State instead
-readRow :: Axis -> Int -> Puzzle -> Row
-readRow = undefined
-writeRow :: Axis -> Int -> Row -> Puzzle -> Puzzle
+readRow :: Int -> Puzzle -> Row
+readRow i puzzle = if i < len then puzzle !! i else map (!!i - len) puzzle
+  when len = length puzzle
+writeRow :: Int -> Row -> Puzzle -> Puzzle
 writeRow = undefined
 {-
 step through each candidate rowset:
-  read mtaching row
+  read matching row
   skip if it has no unknown cells
   remove candidates that do not match row
   infer new row based on candidates
@@ -31,14 +39,21 @@ allRows :: Puzzle -> [Row]
 allRows puzzle = rows ++ columns
   where rows = puzzle
         columns = [map (!!i) puzzle | i <- [0..length (head puzzle) - 1]]
-solve :: [Pattern] -> Puzzle
+solve :: [Pattern] -> Int -> Int -> Puzzle
 solve patterns height width = loop candidates newPuzzle
   where newPuzzle = [[Unknown | j <- [0..height - 1]] | i <- [0..width -1]]
         candidates = map (generate height width) (zip patterns [0..])
 loop candidates puzzle =
   if finished puzzle
   then puzzle
-  else 
+  -- ugh. I have to remember how to use State here
+  -- then turn map into mapM
+  else loop (map (loopBody puzzle) (zip candidates [0..])) puzzle
+-- disabled until I can either wrap in State or write it myself
+loopBody puzzle (rowset, i) = undefined
+--loopBody puzzle (rowset, i) = (newSet, writeRow i newRow puzzle)
+--  where newSet = constrain rowset (readRow i puzzle)
+--        newRow = infer newSet
 -- TODO: It's possible to optimize `expand` by passing in an existing row as constraint
 -- but consuming a row is a lot harder than consuming an integer
 generate :: Int -> Int -> (Int, Pattern) -> [Row]
