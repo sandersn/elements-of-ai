@@ -84,8 +84,13 @@ expand' pattern pix n i =
 constrain :: Row -> Rowset -> Rowset
 constrain truth = filter rowEq
   where rowEq row = zip row truth |> all (uncurry pixEq)
-infer :: [Row] -> Row
-infer = undefined
+infer :: Rowset -> Row
+infer [] = []
+infer rowset | head rowset == [] = []
+infer rowset = infer' (map head rowset) : infer (map tail rowset)
+  where infer' row | all (==Black) row = Black
+        infer' row | all (==White) row = White
+        infer' _ = Unknown
 main = do
   putStrLn "\t*** Testing `expand` ***"
   testExpand [] 0 [[]]
@@ -123,6 +128,12 @@ main = do
                                         [[Black, White, White],
                                          [Black, White, Black]]
   putStrLn "\t*** Testing `infer` ***"
+  testInfer [] []
+  testInfer [[]] []
+  testInfer [[Black]] [Black]
+  testInfer [[White]] [White]
+  testInfer [[Black], [White]] [Unknown]
+  testInfer [[Black, White, Black], [Black, White, White]] [Black, White, Unknown]
 testInfer rowset expected = do
   let actual = infer rowset
   if actual == expected
