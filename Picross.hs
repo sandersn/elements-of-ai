@@ -1,11 +1,9 @@
 import Control.Monad (mzero)
 import Control.Monad.State (get, put, State, runState, execState)
 data Pix = B | W | X deriving (Show, Eq)
-pixEq X _ = True -- (should never happen here)
+pixEq X _ = True
 pixEq _ X = True
-pixEq B B = True
-pixEq W W = True
-pixEq _ _ = False
+pixEq l r = l == r
 
 data Axis = Horizontal | Vertical
 type Pattern = [Specifier]
@@ -20,8 +18,11 @@ type Rowset = [Row] -- should be fine
 -- maybe ([RowCandidates], [ColCandidates]) would be better
 type Candidateset = [Rowset]
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
+
 a |> f = f a
--- TODO: Probably there's a more concise way to write this.
+replace :: Int -> a -> [a] -> [a]
+replace i x xs = take i xs ++ [x] ++ drop (i + 1) xs
+
 readRow :: Int -> State Puzzle Row
 readRow i = do
   puzzle <- get
@@ -36,26 +37,6 @@ writeRow i row = do
   put (if i < len 
        then replace i row puzzle
        else map (uncurry $ replace (i - len)) (zip row puzzle))
-replace :: Int -> a -> [a] -> [a]
-replace i x xs = take i xs ++ [x] ++ drop (i + 1) xs
-{-
-step through each candidate rowset:
-  read matching row
-  skip if it has no X cells
-  remove candidates that do not match row
-  infer new row based on candidates
-  write new row [if it has changed from the matching row]
-  stop when all rows [all cells] in the puzzle have no X cells
-  (or when a complete cycle fails to make a changeto the puzzle)
--}
-finished :: Puzzle -> Bool
-finished = all $ all (/=X)
-finished2 :: Candidateset -> Bool
-finished2 = all $ (==1) . length
-allRows :: Puzzle -> [Row]
-allRows puzzle = rows ++ columns
-  where rows = puzzle
-        columns = [map (!!i) puzzle | i <- [0..length (head puzzle) - 1]]
 solve :: [Pattern] -> Int -> Int -> Puzzle
 solve patterns height width = execState (loop candidates) newPuzzle
   where newPuzzle = replicate width (replicate height X)
@@ -63,7 +44,7 @@ solve patterns height width = execState (loop candidates) newPuzzle
 loop :: Candidateset -> State Puzzle ()
 loop candidates = do
   puzzle <- get
-  if finished puzzle -- finished candidates
+  if all (all (/=X)) puzzle
   then return ()
   else loop =<< mapM loopBody (zip [0..] candidates)
 loopBody :: (Int, Rowset) -> State Puzzle Rowset
@@ -71,9 +52,7 @@ loopBody (i, rowset) = do
   oldRow <- readRow i
   let newSet = constrain oldRow rowset
   writeRow i (infer newSet)
-  return newSet        
--- TODO: It's possible to optimize `expand` by passing in an existing row as constraint
--- but consuming a row is a lot harder than consuming an integer
+  return newSet
 generate :: Int -> Int -> [Pattern] -> Candidateset
 generate height width patterns = map generate' (zip [0..] patterns)
   where generate' (i,pattern) = expand pattern (if i < width then width else height)
@@ -90,8 +69,8 @@ expand' :: Pattern -> Pix -> Int -> Int -> [Row]
 expand' pattern pix n i = 
   map (replicate i pix ++) (expand pattern (n - i))
 constrain :: Row -> Rowset -> Rowset
-constrain truth = filter rowEq
-  where rowEq row = zip row truth |> all (uncurry pixEq)
+constrain truth = filter (all (uncurry pixEq) . zip truth)
+--  where rowEq row = zip row truth |> all (uncurry (==))
 infer :: Rowset -> Row
 infer [] = []
 infer rowset | head rowset == [] = []
@@ -99,6 +78,11 @@ infer rowset = infer' (map head rowset) : infer (map tail rowset)
   where infer' row | all (==B) row = B
         infer' row | all (==W) row = W
         infer' _ = X
+printPuzzle = mapM_ printRow
+  where printRow row = mapM_ (putStr . pixShow) row >> putStrLn ""
+        pixShow B = "X"
+        pixShow W = " "
+        pixShow X = "?"
 
 -- test code --
 slingshot = [[Star, Num 2, Plus, Num 2, Star], 
@@ -112,10 +96,12 @@ slingshot = [[Star, Num 2, Plus, Num 2, Star],
              [Star, Num 3, Star], 
              [Star, Num 1, Plus, Num 1, Star], 
              [Star, Num 2, Star]]
+
 miniPuzzle = [[X, B, B],
               [X, X, X],
               [B, W, B]]
 main = do
+  printPuzzle (solve slingshot 5 5)
   putStrLn "\t*** Testing `expand` ***"
   testExpand [] 0 [[]]
   testExpand [] 12 []
