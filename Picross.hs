@@ -1,5 +1,5 @@
 import Control.Monad (mzero)
-import Control.Monad.State (get, put, State)
+import Control.Monad.State (get, put, State, runState, evalState, execState)
 data Pix = B | W | X deriving (Show, Eq)
 pixEq X _ = True -- (should never happen here)
 pixEq _ X = True
@@ -21,22 +21,23 @@ type Rowset = [Row] -- should be fine
 type Candidateset = [Rowset]
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
 a |> f = f a
--- TODO: probably this should be wrapped in State instead
+-- TODO: Probably there's a more concise way to write this.
 readRow :: Int -> State Puzzle Row
 readRow i = do
   puzzle <- get
   let len = length puzzle
-  return $ if i < len then puzzle !! i else map (!!i - len) puzzle
+  return (if i < len 
+          then puzzle !! i 
+          else map (!!i - len) puzzle)
 writeRow :: Int -> Row -> State Puzzle ()
 writeRow i row = do
   puzzle <- get
   let len = length puzzle
-  let puzzle' = if i < len then replace i row puzzle else replaceInEach i (zip row puzzle)
-  put puzzle'
-replace :: Int -> Row -> Puzzle -> Puzzle
-replace i row puzzle = take (i-1) puzzle ++ [row] ++ drop i puzzle
-replaceInEach :: Int -> [(Pix, Row)] -> Puzzle
-replaceInEach i = map (\ (pix, row) -> take (i-1) row ++ [pix] ++ drop i row)
+  put (if i < len 
+       then replace i row puzzle
+       else map (uncurry $ replace (i - len)) (zip row puzzle))
+replace :: Int -> a -> [a] -> [a]
+replace i x xs = take (i - 1) xs ++ [x] ++ drop i xs 
 {-
 step through each candidate rowset:
   read matching row
@@ -115,6 +116,9 @@ slingshot = [[Star, Num 2, Plus, Num 2, Star],
              [Star, Num 3, Star], 
              [Star, Num 1, Plus, Num 1, Star], 
              [Star, Num 2, Star]]
+miniPuzzle = [[X, B, B],
+              [X, X, X],
+              [B, W, B]]
 main = do
   putStrLn "\t*** Testing `expand` ***"
   testExpand [] 0 [[]]
@@ -170,6 +174,12 @@ main = do
                     [[B,B,B,W,W],[W,B,B,B,W],[W,W,B,B,B]],
                     [[B,W,B,W,W],[B,W,W,B,W],[B,W,W,W,B],[W,B,W,B,W],[W,B,W,W,B],[W,W,B,W,B]],
                     [[B,B,W,W,W],[W,B,B,W,W],[W,W,B,B,W],[W,W,W,B,B]]]
+  putStrLn "\t***Testing `readRow` ***"
+  testReadRow miniPuzzle 0 (miniPuzzle !! 0)
+  testReadRow miniPuzzle 2 (miniPuzzle !! 2)
+  testReadRow miniPuzzle 3 (map (!!0) miniPuzzle)
+  testReadRow miniPuzzle 5 (map (!!2) miniPuzzle)
+
 testInfer rowset expected = do
   let actual = infer rowset
   if actual == expected
@@ -218,3 +228,17 @@ testGenerate height width patterns expected = do
     print actual
     putStr "\texpected: "
     print expected
+testReadRow puzzle i expected = do
+  let (actualRow, actualPuzzle) = runState (readRow i) puzzle
+  if actualPuzzle /= puzzle
+  then fail "readRow should not modify its puzzle"
+  else if actualRow == expected
+       then putStrLn ("success for " ++ show i)
+       else do
+         putStrLn " !!! FAIL !!!"
+         putStr "\ti: "
+         print i
+         putStr "\tactual row: "
+         print actualRow
+         putStr "\texpected row: "
+         print expected
