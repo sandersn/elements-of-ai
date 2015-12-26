@@ -1,5 +1,5 @@
 import Control.Monad (mzero)
-import Control.Monad.State (get, put, State, runState, evalState, execState)
+import Control.Monad.State (get, put, State, runState, execState)
 data Pix = B | W | X deriving (Show, Eq)
 pixEq X _ = True -- (should never happen here)
 pixEq _ X = True
@@ -57,25 +57,21 @@ allRows puzzle = rows ++ columns
   where rows = puzzle
         columns = [map (!!i) puzzle | i <- [0..length (head puzzle) - 1]]
 solve :: [Pattern] -> Int -> Int -> Puzzle
-solve patterns height width = loop (candidates, newPuzzle)
+solve patterns height width = execState (loop candidates) newPuzzle
   where newPuzzle = replicate width (replicate height X)
         candidates = generate height width patterns
-loop :: (Candidateset, Puzzle) -> Puzzle
-loop (candidates, puzzle) =
-  if finished puzzle
-  then puzzle
-  -- ugh. I have to remember how to use State here
-  -- then turn map into mapM
-  else loop (map (loopBody puzzle) (zip candidates [0..]), puzzle)
--- disabled until I can either wrap in State or write it myself
--- alternatively, I could infer the new puzzle from the returned rowsets
--- but I think it's more correct to update the puzzle incrementally
--- (I'm not sure how to combine row vs column inferences in a batched way)
-loopBody :: Puzzle -> (Rowset, Int) -> Rowset -- (Rowset, Puzzle)
-loopBody puzzle (rowset, i) = undefined
---loopBody puzzle (rowset, i) = (newSet, writeRow i newRow puzzle)
---  where newSet = constrain rowset (readRow i puzzle)
---        newRow = infer newSet
+loop :: Candidateset -> State Puzzle ()
+loop candidates = do
+  puzzle <- get
+  if finished puzzle -- finished candidates
+  then return ()
+  else loop =<< mapM loopBody (zip [0..] candidates)
+loopBody :: (Int, Rowset) -> State Puzzle Rowset
+loopBody (i, rowset) = do
+  oldRow <- readRow i
+  let newSet = constrain oldRow rowset
+  writeRow i (infer newSet)
+  return newSet        
 -- TODO: It's possible to optimize `expand` by passing in an existing row as constraint
 -- but consuming a row is a lot harder than consuming an integer
 generate :: Int -> Int -> [Pattern] -> Candidateset
