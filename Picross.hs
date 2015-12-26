@@ -37,7 +37,7 @@ writeRow i row = do
        then replace i row puzzle
        else map (uncurry $ replace (i - len)) (zip row puzzle))
 replace :: Int -> a -> [a] -> [a]
-replace i x xs = take (i - 1) xs ++ [x] ++ drop i xs 
+replace i x xs = take i xs ++ [x] ++ drop (i + 1) xs
 {-
 step through each candidate rowset:
   read matching row
@@ -179,11 +179,18 @@ main = do
   testReadRow miniPuzzle 2 (miniPuzzle !! 2)
   testReadRow miniPuzzle 3 (map (!!0) miniPuzzle)
   testReadRow miniPuzzle 5 (map (!!2) miniPuzzle)
+  putStrLn "\t***Testing `writeRow` ***"
+  testWriteRow miniPuzzle 2 [W, W, W] [[X, B, B],
+                                       [X, X, X],
+                                       [W, W, W]]
+  testWriteRow miniPuzzle 3 [W, W, W] [[W, B, B],
+                                       [W, X, X],
+                                       [W, W, B]]
 
 testInfer rowset expected = do
   let actual = infer rowset
   if actual == expected
-  then putStrLn ("success for " ++ show actual)
+  then putStr "." -- putStrLn ("success for " ++ show actual)
   else do
     putStrLn " !!! FAIL !!!"
     putStr "\trowset: "
@@ -195,7 +202,7 @@ testInfer rowset expected = do
 testConstrain truth rowset expected = do
   let actual = constrain truth rowset
   if actual == expected
-  then putStrLn ("success for " ++ show truth)
+  then putStr "." -- putStrLn ("success for " ++ show truth)
   else do
     putStrLn " !!! FAIL !!!"
     putStr "\ttruth: "
@@ -207,7 +214,7 @@ testConstrain truth rowset expected = do
 testExpand input length expected = do
   let actual = expand input length
   if actual == expected
-  then putStrLn ("success for " ++ show input)
+  then putStr "." -- putStrLn ("success for " ++ show input)
   else do
     putStrLn " !!! FAIL !!!"
     putStr "\tinput: "
@@ -219,7 +226,7 @@ testExpand input length expected = do
 testGenerate height width patterns expected = do
   let actual = generate height width patterns
   if actual == expected
-  then putStrLn ("success for " ++ show patterns)
+  then putStr "." -- putStrLn ("success for " ++ show patterns)
   else do
     putStrLn " !!! FAIL !!!"
     putStr "\tpatterns: "
@@ -233,7 +240,7 @@ testReadRow puzzle i expected = do
   if actualPuzzle /= puzzle
   then fail "readRow should not modify its puzzle"
   else if actualRow == expected
-       then putStrLn ("success for " ++ show i)
+       then putStr "." -- putStrLn ("success for " ++ show i)
        else do
          putStrLn " !!! FAIL !!!"
          putStr "\ti: "
@@ -242,3 +249,13 @@ testReadRow puzzle i expected = do
          print actualRow
          putStr "\texpected row: "
          print expected
+testWriteRow puzzle i row expected = do
+  let actualPuzzle = execState (writeRow i row) puzzle
+  if actualPuzzle == expected
+  then putStr "." -- putStrLn ("success for " ++ show row)
+  else do
+    putStrLn " !!! FAIL !!!"
+    putStr "\tactual puzzle: "
+    print actualPuzzle
+    putStr "\texpected: "
+    print expected
