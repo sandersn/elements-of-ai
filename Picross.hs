@@ -1,5 +1,6 @@
 import Control.Monad (mzero)
 import Control.Monad.State (get, put, State, runState, execState)
+import Data.List (intersperse)
 data Pix = B | W | X deriving (Show, Eq)
 pixEq X _ = True
 pixEq _ X = True
@@ -83,19 +84,13 @@ printPuzzle = mapM_ printRow
         pixShow B = "X"
         pixShow W = " "
         pixShow X = "?"
+readPuzzlePattern :: [[Int]] -> [Pattern]
+readPuzzlePattern = map readPattern
+  where readPattern ns = Star : intersperse Plus (map Num ns) ++ [Star]
 
 -- test code --
-slingshot = [[Star, Num 2, Plus, Num 2, Star], 
-             [Star, Num 1, Plus, Num 1, Star], 
-             [Star, Num 3, Star], 
-             [Star, Num 1, Star], 
-             [Star, Num 1, Star], 
-             -- columns
-             [Star, Num 2, Star], 
-             [Star, Num 1, Plus, Num 1, Star], 
-             [Star, Num 3, Star], 
-             [Star, Num 1, Plus, Num 1, Star], 
-             [Star, Num 2, Star]]
+slingshot = readPuzzlePattern [[2, 2], [1, 1], [3], [1], [1],
+                               [2], [1, 1], [3], [1, 1], [2]]
 
 miniPuzzle = [[X, B, B],
               [X, X, X],
