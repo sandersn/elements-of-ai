@@ -1,4 +1,5 @@
 import Control.Monad (mzero)
+import Control.Monad.State (get, put, State)
 data Pix = B | W | X deriving (Show, Eq)
 pixEq X _ = True -- (should never happen here)
 pixEq _ X = True
@@ -21,11 +22,21 @@ type Candidateset = [Rowset]
 data Specifier = Star | Plus | Num Int deriving (Show, Eq)
 a |> f = f a
 -- TODO: probably this should be wrapped in State instead
-readRow :: Int -> Puzzle -> Row
-readRow i puzzle = if i < len then puzzle !! i else map (!!i - len) puzzle
-  where len = length puzzle
-writeRow :: Int -> Row -> Puzzle -> Puzzle
-writeRow = undefined
+readRow :: Int -> State Puzzle Row
+readRow i = do
+  puzzle <- get
+  let len = length puzzle
+  return $ if i < len then puzzle !! i else map (!!i - len) puzzle
+writeRow :: Int -> Row -> State Puzzle ()
+writeRow i row = do
+  puzzle <- get
+  let len = length puzzle
+  let puzzle' = if i < len then replace i row puzzle else replaceInEach i (zip row puzzle)
+  put puzzle'
+replace :: Int -> Row -> Puzzle -> Puzzle
+replace i row puzzle = take (i-1) puzzle ++ [row] ++ drop i puzzle
+replaceInEach :: Int -> [(Pix, Row)] -> Puzzle
+replaceInEach i = map (\ (pix, row) -> take (i-1) row ++ [pix] ++ drop i row)
 {-
 step through each candidate rowset:
   read matching row
@@ -91,6 +102,8 @@ infer rowset = infer' (map head rowset) : infer (map tail rowset)
   where infer' row | all (==B) row = B
         infer' row | all (==W) row = W
         infer' _ = X
+
+-- test code --
 slingshot = [[Star, Num 2, Plus, Num 2, Star], 
              [Star, Num 1, Plus, Num 1, Star], 
              [Star, Num 3, Star], 
