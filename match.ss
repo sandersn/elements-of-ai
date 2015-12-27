@@ -21,5 +21,27 @@
      (match3 (cdr p) (cdr s)))
     ((eq? (car p) '?) (match3 (cdr p) (cdr s)))
     (else #f)))
-[repl-eval "(match2 '(a (b) c) '(x y z))\n"]
+;; Scheme doesn't have bare `set`, so match4
+;; adds to a global a-list instead.
+;; This is *also* a terrible idea, but slightly better
+;; than using `set`.
+;; A Javascript version would, of course, set properties on `this`
+;; without checking what `this` is bound to.
+(define matches '())
+(define (match4 p s)
+  (cond
+    ((null? p) (null? s))
+    ((or (atom? p) (atom? s)) #f)
+    ((equal? (car p) (car s))
+     (match4 (cdr p) (cdr s)))
+    ((and
+       (pair? (car p))
+       (= (length (car p)) 2)
+       (eq? (caar p) '?)
+       (match4 (cdr p) (cdr s)))
+     (set! matches (cons (cons (cadar p) (car s)) matches))
+     #t)
+    (else #f)))
+  
+[repl-eval "(match4 '(x (? b) z) '(x y z))\n"]
 (match3 '(a b ? d) '(a b e d))
