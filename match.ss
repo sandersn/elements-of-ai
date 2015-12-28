@@ -42,6 +42,28 @@
      (set! matches (cons (cons (cadar p) (car s)) matches))
      #t)
     (else #f)))
+(define (match5 p s)
+  (cond
+    ((null? p) (null? s))
+    ((or (atom? p) (atom? s)) #f)
+    ((equal? (car p) (car s))
+     (match5 (cdr p) (cdr s)))
+    ((and
+       (pair? (car p))
+       (= (length (car p)) 2)
+       (eq? (caar p) '?)
+       (match5 (cdr p) (cdr s)))
+     (set! matches (cons (cons (cadar p) (car s)) matches))
+     #t)
+    ((and
+       (pair? (car p))
+       (= (length (car p)) 2)
+       (not (eq? (caar p) '?))
+       (apply (eval (caar p)) (list (car s)))
+       (match5 (cdr p) (cdr s)))
+     (set! matches (cons (cons (cadar p) (car s)) matches))
+     #t)
+    (else #f)))
   
-[repl-eval "(match4 '(x (? b) z) '(x y z))\n"]
+[repl-eval "(match5 '(x (? b) z) '(x y z))\n"]
 (match3 '(a b ? d) '(a b e d))
