@@ -3,6 +3,8 @@
 ;; the usual definition also checks (not (null? x))
 (define (atom? x)
   (not (pair? x)))
+(define (acons k v alist)
+  (cons (cons k v) alist))
 ; structural equality
 (define match1 equal?)
 ; structural isomorphism
@@ -39,7 +41,7 @@
        (= (length (car p)) 2)
        (eq? (caar p) '?)
        (match4 (cdr p) (cdr s)))
-     (set! matches (cons (cons (cadar p) (car s)) matches))
+     (set! matches (acons (cadar p) (car s) matches))
      #t)
     (else #f)))
 (define (match5 p s)
@@ -53,7 +55,7 @@
        (= (length (car p)) 2)
        (eq? (caar p) '?)
        (match5 (cdr p) (cdr s)))
-     (set! matches (cons (cons (cadar p) (car s)) matches))
+     (set! matches (acons (cadar p) (car s) matches))
      #t)
     ((and
        (pair? (car p))
@@ -61,9 +63,49 @@
        (not (eq? (caar p) '?))
        (apply (eval (caar p)) (list (car s)))
        (match5 (cdr p) (cdr s)))
-     (set! matches (cons (cons (cadar p) (car s)) matches))
+     (set! matches (acons (cadar p) (car s) matches))
      #t)
     (else #f)))
-  
-[repl-eval "(match5 '(x (? b) z) '(x y z))\n"]
+
+(define (match p s)
+  (define matches '())
+  (define (match^ p s)
+    (cond
+      ((null? p) (null? s))
+      ; from here on, p is not null so it must be a cons
+      ((atom? (car p))
+       (and (not (atom? s))
+            (equal? (car p) (car s))
+            (match^ (cdr p) (cdr s))))
+      ((and (not (null? s)) (eq? (caar p) '?))
+       (cond 
+         ((match^ (cdr p) (cdr s))
+          (set! matches (acons (cadar p) (car s) matches))
+          #t)
+         (else #f)))
+      ((eq? (caar p) '*)
+       (cond
+         ((and (not (null? s)) (match^ (cdr p) (cdr s)))
+          (set! matches (acons (cadar p) (list (car s)) matches))
+          #t)
+         ((match^ (cdr p) s)
+          (set! matches (acons (cadar p) '() matches))
+          #t)
+         ((and (not (null? s)) (match^ p (cdr s)))
+          (let ((result (assq (cadar p) matches)))
+            (set-cdr! result (cons (car s) (cdr result))))
+          #t)
+         (else #f)))
+       ((and 
+          (not (null? s))
+          (apply (eval (caar p)) (list (car s)))
+          (match^ (cdr p) (cdr s)))
+        (set! matches (acons (cadar p) (car s) matches))
+        #t)
+       (else #f)))
+  (if (match^ p s) matches #f))
+ 
+(repl-eval "(match 
+              '((* x) wild (? y) (symbol? z)) 
+              '(* specifies a wild card sequence element))")
 (match3 '(a b ? d) '(a b e d))
