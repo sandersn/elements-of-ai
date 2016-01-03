@@ -39,6 +39,30 @@
         #t)
        (else #f)))
   (if (match^ p s) matches #f))
+(define (printl l)
+  (cond ((null? l) (display "\n"))
+        (else 
+          (display (car l))
+          (display " ")
+          (printl (cdr l)))))
 (define (shrink)
   (define wword-count 0)
-  (display "not started yet really"))
+  (define punt-count 0)
+  [display "WELCOME TO MY SOFA!\n"]
+  [display "PLEASE DO NOT USE ALL CAPS TO TALK.\n"]
+  [define rules
+    `[[[you are [* x]] . ,[lambda [x] `[please tell me ,[wword] you are ,x]]]
+      [[you feel [* x]] . ,[lambda [x] '[i sometimes feel the same way]]]
+      [[you have [* x]] . ,[lambda [x] `[how long have you had ,x]]]
+      [[because [* x]] . ,[lambda [x] `[is that really the reason]]]
+      [[] . ,[lambda [x] '[please say something]]]
+      [[yes [* x] . ,[lambda [x] `[how can you be so sure ,x]]]
+     ]]
+  [define [loop]
+    [let [[s [you-me-map [read]]]]]
+      [cond
+        [[match '[bye] s] 'goodbye]
+        [[match '[you are '[* x]] s]
+        [else '???]]]]
+  [loop]
+  (display "not started yet really\n"))
