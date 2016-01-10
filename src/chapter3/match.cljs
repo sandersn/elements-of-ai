@@ -9,3 +9,10 @@
     (empty? p) (empty? s)
     (match2 (first p) (first s)) (match2 (rest p) (rest s))
     :else false))
+(defn match3 [p s]
+  (cond
+    (or (atom? p) (atom? s)) false
+    (empty? p) (empty? s)
+    (= (first p) (first s)) (match3 (rest p) (rest s))
+    (= (first p) '?) (match3 (rest p) (rest s))
+    :else false))
