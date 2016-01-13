@@ -1,6 +1,9 @@
 cljs.jar
 node_modules/
 .repl-*/
+.nrepl-*
 .cljs_node_repl*/
 out/
+target/
+tmp/
 
