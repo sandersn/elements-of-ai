@@ -1,6 +1,4 @@
-(ns chapter3.match
-  (:require [cljs.nodejs :as nodejs]))
-(nodejs/enable-util-print!)
+(ns chapter3.match)
 (def atom? (comp not list?))
 (defn match2 [p s]
   (cond
