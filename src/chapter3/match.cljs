@@ -28,7 +28,7 @@
       (do
         (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
         true)
-    :else false))
+      :else false))
   (if (match-helper p s) @variables false))
 (defn match5
   "Note: ClojureScript doesn't seem to have resolve (or eval) so this code
@@ -63,21 +63,40 @@
   (def variables (atom {}))
   (defn match-helper [p s]
     (cond
-      (or (atom? p) (atom? s)) false
+      ; (or (atom? p) (atom? s)) false
       (empty? p) (empty? s)
-      (= (first p) (first s)) (match5 (rest p) (rest s))
-      (and
-       (= (count (first p)) 2)
-       (= (first (first p)) '?)
-       (match5 (rest p) (rest s)))
-      (do
+      (atom? (first p))
+      (and (not (empty? s))
+           (= (first p) (first s))
+           (match (rest p) (rest s)))
+      ; complex patterns
+      (and (not (empty? s))
+           (= (first (first p)) '?))
+      (when (match (rest p) (rest s))
         (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
         true)
+      (= (first (first p)) '*)
+      (cond
+        (and (not (empty? s))
+             (match (rest p) (rest s)))
+        (do
+          (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (list (first s)))))
+          true)
+        (match (rest p) s)
+        (do
+          (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (list))))
+          true)
+        (and (not (empty? s))
+             (match p (rest s)))
+        (do
+          (swap! variables (fn [vs] (assoc vs
+                                           (first (rest (first p))) 
+                                           (cons (first s) (vs (first (rest (first p))))))))
+          true))
       (and
-       (= (count (first p)) 2)
-       (not (= (first (first p)) '?))
+       (not (empty? s))
        ((resolve (first (first p))) (first s))
-       (match5 (rest p) (rest s)))
+       (match (rest p) (rest s)))
       (do
         (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
         true)
