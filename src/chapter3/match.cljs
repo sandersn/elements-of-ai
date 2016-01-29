@@ -26,7 +26,7 @@
        (= (first (first p)) '?)
        (match4 (rest p) (rest s)))
       (do
-        (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
+        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
         true)
       :else false))
   (if (match-helper p s) @variables false))
@@ -45,7 +45,7 @@
        (= (first (first p)) '?)
        (match5 (rest p) (rest s)))
       (do
-        (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
+        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
         true)
       (and
        (= (count (first p)) 2)
@@ -53,7 +53,7 @@
        ((resolve (first (first p))) (first s))
        (match5 (rest p) (rest s)))
       (do
-        (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
+        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
         true)
     :else false))
   (if (match-helper p s) @variables false))
@@ -73,32 +73,32 @@
       (and (not (empty? s))
            (= (first (first p)) '?))
       (when (match (rest p) (rest s))
-        (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
+        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
         true)
       (= (first (first p)) '*)
       (cond
         (and (not (empty? s))
              (match (rest p) (rest s)))
         (do
-          (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (list (first s)))))
+          (swap! variables (fn [vs] (assoc vs (second (first p)) (list (first s)))))
           true)
         (match (rest p) s)
         (do
-          (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (list))))
+          (swap! variables (fn [vs] (assoc vs (second (first p)) (list))))
           true)
         (and (not (empty? s))
              (match p (rest s)))
         (do
           (swap! variables (fn [vs] (assoc vs
-                                           (first (rest (first p))) 
-                                           (cons (first s) (vs (first (rest (first p))))))))
+                                           (second (first p)) 
+                                           (cons (first s) (vs (second (first p)))))))
           true))
       (and
        (not (empty? s))
        ((resolve (first (first p))) (first s))
        (match (rest p) (rest s)))
       (do
-        (swap! variables (fn [vs] (assoc vs (first (rest (first p))) (first s))))
+        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
         true)
     :else false))
   (if (match-helper p s) @variables false))
