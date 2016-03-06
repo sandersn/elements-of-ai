@@ -1,19 +1,43 @@
-(ns chapter3.match)
-(def atom? (comp not list?))
-(defn match2 [p s]
-  (cond
-    (atom? p) (atom? s)
-    (atom? s) false
-    (empty? p) (empty? s)
-    (match2 (first p) (first s)) (match2 (rest p) (rest s))
-    :else false))
-(defn match3 [p s]
-  (cond
-    (or (atom? p) (atom? s)) false
-    (empty? p) (empty? s)
-    (= (first p) (first s)) (match3 (rest p) (rest s))
-    (= (first p) '?) (match3 (rest p) (rest s))
-    :else false))
+(ns chapter3.match
+  (:refer clojure.test :only [with-test is deftest]))
+(with-test
+  (defn atom? [x] 
+    (not (or (list? x) (nil? x))))
+  (is (atom? 12))
+  (is (not (atom? '())))
+  (is (not (atom? nil)))
+  (is (not (atom? '(1))))
+  (is (atom? [])) ; this is basically wrong -- don't use vectors with chapter3.match
+  (is (atom? {}))
+  (is (atom? true)))
+
+(defn basic-match-test [match]
+  (is (not (match 12 '(12)))) 
+  (is (not (match '(12) 12)))
+  (is (match '() '()))
+  (is (not (match '() '(1))))
+  (is (not (match '(1) '())))
+  (is (match '(1 (2) 3) '(1 (2) 3)))
+  (is (not (match '(1 (2 nope) 3) '(1 (2 not really) 3))))) 
+(with-test
+  (defn match2 [p s]
+    (cond
+      (atom? p) (atom? s)
+      (atom? s) false
+      (empty? p) (empty? s)
+      (match2 (first p) (first s)) (match2 (rest p) (rest s))
+      :else false))
+  (is (match2 12 12)) ; unlike the rest, match2 matches bare atoms
+  (basic-match-test match2))
+(with-test
+  (defn match3 [p s]
+    (cond
+      (or (atom? p) (atom? s)) false
+      (empty? p) (empty? s)
+      (= (first p) (first s)) (match3 (rest p) (rest s))
+      (= (first p) '?) (match3 (rest p) (rest s))
+      :else false))
+  (basic-match-test match3))
 (defn match4 [p s]
   (def variables (atom {}))
   (defn match-helper [p s]
