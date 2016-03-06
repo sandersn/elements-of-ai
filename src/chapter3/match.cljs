@@ -16,9 +16,13 @@
   (is (not (match '(12) 12)))
   (is (match '() '()))
   (is (not (match '() '(1))))
-  (is (not (match '(1) '())))
-  (is (match '(1 (2) 3) '(1 (2) 3)))
-  (is (not (match '(1 (2 nope) 3) '(1 (2 not really) 3))))) 
+  (is (not (match '(1) '())))) 
+(defn recursive-match-test [match]
+  (is (match '(1 (2) 3) '(1 (2) 3))) 
+  (is (not (match '(1 (2 nope) 3) '(1 (2 not really) 3)))))
+(defn basic-pattern-match-test [match]
+  (is (match '(1 (? x) 2) '(1 not-really 2)))
+  (is (= 'not-really ('x (match '(1 (? x) 2) '(1 not-really 2))))))
 (with-test
   (defn match2 [p s]
     (cond
@@ -28,7 +32,8 @@
       (match2 (first p) (first s)) (match2 (rest p) (rest s))
       :else false))
   (is (match2 12 12)) ; unlike the rest, match2 matches bare atoms
-  (basic-match-test match2))
+  (basic-match-test match2)
+  (recursive-match-test match2))
 (with-test
   (defn match3 [p s]
     (cond
@@ -37,50 +42,60 @@
       (= (first p) (first s)) (match3 (rest p) (rest s))
       (= (first p) '?) (match3 (rest p) (rest s))
       :else false))
-  (basic-match-test match3))
-(defn match4 [p s]
-  (def variables (atom {}))
-  (defn match-helper [p s]
-    (cond
-      (or (atom? p) (atom? s)) false
-      (empty? p) (empty? s)
-      (= (first p) (first s)) (match4 (rest p) (rest s))
-      (and
-       (= (count (first p)) 2)
-       (= (first (first p)) '?)
-       (match4 (rest p) (rest s)))
-      (do
-        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-        true)
-      :else false))
-  (if (match-helper p s) @variables false))
-(defn match5
+  (basic-match-test match3)
+  (recursive-match-test match3))
+(with-test
+  (defn match4 [p s]
+    (def variables (atom {}))
+    (defn match-helper [p s]
+      (cond
+        (or (atom? p) (atom? s)) false
+        (empty? p) (empty? s)
+        (= (first p) (first s)) (match4 (rest p) (rest s))
+        (and
+         (not (atom? (first p)))
+         (= (count (first p)) 2)
+         (= (first (first p)) '?)
+         (match4 (rest p) (rest s)))
+        (do
+          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
+          true)
+        :else false))
+    (if (match-helper p s) @variables false))
+  (basic-match-test match4)
+  (basic-pattern-match-test match4))
+(with-test
+  (defn match5
   "Note: ClojureScript doesn't seem to have resolve (or eval) so this code
   won't actually work there."
-  [p s]
-  (def variables (atom {}))
-  (defn match-helper [p s]
-    (cond
-      (or (atom? p) (atom? s)) false
-      (empty? p) (empty? s)
-      (= (first p) (first s)) (match5 (rest p) (rest s))
-      (and
-       (= (count (first p)) 2)
-       (= (first (first p)) '?)
-       (match5 (rest p) (rest s)))
-      (do
-        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-        true)
-      (and
-       (= (count (first p)) 2)
-       (not (= (first (first p)) '?))
-       ((resolve (first (first p))) (first s))
-       (match5 (rest p) (rest s)))
-      (do
-        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-        true)
-    :else false))
-  (if (match-helper p s) @variables false))
+    [p s]
+    (def variables (atom {}))
+    (defn match-helper [p s]
+      (cond
+        (or (atom? p) (atom? s)) false
+        (empty? p) (empty? s)
+        (= (first p) (first s)) (match5 (rest p) (rest s))
+        (and
+         (not (atom? (first p)))
+         (= (count (first p)) 2)
+         (= (first (first p)) '?)
+         (match5 (rest p) (rest s)))
+        (do
+          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
+          true)
+        (and
+         (not (atom? (first p)))
+         (= (count (first p)) 2)
+         (not (= (first (first p)) '?))
+         ((resolve (first (first p))) (first s))
+         (match5 (rest p) (rest s)))
+        (do
+          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
+          true)
+        :else false))
+    (if (match-helper p s) @variables false))
+  (basic-match-test match5)
+  (basic-pattern-match-test match5))
 (defn match
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
   [p s]
