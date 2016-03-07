@@ -27,7 +27,6 @@
   (is (= {} (match '(1 2 3) '(1 2 3))))
   (is (= {'x 1 'y 2} (match '((? x) (? y) 3) '(1 2 3))))
   (is (not (match '(1 3) '(1 2))))
-  (is (= {} (match '(1 (2) 3) '(1 (2) 3))))
   (is (not (match '(1 (?) 3) '(1 (2) 3))))
   (is (not (match '(1 (? x y) 3) '(1 (2) 3))))
   (is (not (match '(1 (! x) 3) '(1 (2) 3))))
@@ -77,7 +76,9 @@
         :else false))
     (if (match-helper p s) @variables false))
   (basic-match-test match4)
-  (basic-pattern-match-test match4))
+  (basic-pattern-match-test match4)
+  ; match4 and match5 allow malformed patterns as literals
+  (is (= {} (match4 '(1 (2) 3) '(1 (2) 3)))))
 (with-test
   (defn match5
   "Note: ClojureScript doesn't seem to have resolve (or eval) so this code
@@ -111,6 +112,7 @@
     (if (match-helper p s) @variables false))
   (basic-match-test match5)
   (basic-pattern-match-test match5)
+  (is (= {} (match5 '(1 (2) 3) '(1 (2) 3))))
   (function-pattern-match-test match5))
 (with-test
   (defn match
@@ -119,7 +121,7 @@
     (def variables (atom {}))
     (defn match-helper [p s]
       (cond
-        ; (or (atom? p) (atom? s)) false
+        (or (atom? p) (atom? s)) false
         (empty? p) (empty? s)
         (atom? (first p))
         (and (not (empty? s))
@@ -127,11 +129,13 @@
              (match-helper (rest p) (rest s)))
         ; complex patterns
         (and (not (empty? s))
+             (= (count (first p)) 2)
              (= (first (first p)) '?))
         (when (match-helper (rest p) (rest s))
           (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
           true)
-        (= (first (first p)) '*)
+        (and (= (first (first p)) '*)
+             (= (count (first p)) 2))
         (cond
           (and (not (empty? s))
                (match-helper (rest p) (rest s)))
@@ -151,6 +155,7 @@
             true))
         (and
          (not (empty? s))
+         (= (count (first p)) 2)
          (resolve (first (first p)))
          ((resolve (first (first p))) (first s))
          (match-helper (rest p) (rest s)))
@@ -161,6 +166,7 @@
     (if (match-helper p s) @variables false))
   (basic-match-test match)
   (basic-pattern-match-test match)
+  (is (not (match '(1 (2) 3) '(1 (2) 3))))
   (function-pattern-match-test match))
 (defn match-state
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
