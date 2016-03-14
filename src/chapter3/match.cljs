@@ -32,16 +32,17 @@
   (is (not (match '(1 (! x) 3) '(1 (2) 3))))
   (is (not (match '((? x) 3) '(1 2)))))
 (defn =1? [x] (= x 1))
-(defn function-pattern-match-test [match]
-  (is (= {'x 1 'y 2} (match '((chapter3.match/=1? x) (? y) 3) '(1 2 3))))
-  (is (not (match '((chapter3.match/=1? x) 2 3) '(2 2 3)))))
-(defn star-pattern-match-test [match]
+(defn =1?-state [d x] (and (= x 1) (assoc d 'x 'is-1)))
+(defn function-pattern-match-test [match f]
+  (is (= {'x 1 'y 2} (match (cons (cons f '(x)) '((? y) 3)) '(1 2 3))))
+  (is (not (match (cons (cons f '(x)) '(2 3)) '(2 2 3)))))
+(defn star-pattern-match-test [match f]
   (is (= {'x '(the whole thing)} (match '((* x)) '(the whole thing))))
   (is (= {'x '(whole thing) 'y 'the} (match '((? y) (* x)) '(the whole thing))))
   (is (not (match '(this (* x)) '(the whole thing))))
   (is (= {'x '(thing) 'y 'whole} (match '(the (? y) (* x)) '(the whole thing))))
   (is (= {'x '()} (match '(the whole thing (* x)) '(the whole thing))))
-  (is (not (match '(the (chapter3.match/=1? y) thing (* x)) '(the whole thing)))))
+  (is (not (match (cons 'the (cons (cons f '(y)) (cons 'thing ()))) '(the whole thing)))))
 
 (with-test
   (defn match2 [p s]
@@ -120,7 +121,7 @@
   (basic-match-test match5)
   (basic-pattern-match-test match5)
   (is (= {} (match5 '(1 (2) 3) '(1 (2) 3))))
-  (function-pattern-match-test match5))
+  (function-pattern-match-test match5 chapter3.match/=1?))
 (with-test
   (defn match
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
@@ -174,47 +175,58 @@
   (basic-match-test match)
   (basic-pattern-match-test match)
   (is (not (match '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
-  (function-pattern-match-test match)
-  (star-pattern-match-test match))
-(defn match-state
+  (function-pattern-match-test match chapter3.match/=1?)
+  (star-pattern-match-test match chapter3.match/=1?))
+(with-test
+  (defn match-state
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
-  [p s]
-  (def variables (atom {}))
-  (defn match-helper [p s]
-    (cond
-      (empty? p) (empty? s)
-      (atom? (first p))
-      (and (not (empty? s))
-           (= (first p) (first s))
-           (match-helper (rest p) (rest s)))
-      ; complex patterns
-      (and (not (empty? s))
-           (= (first (first p)) '?))
-      (when (match-helper (rest p) (rest s))
-        (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-        true)
-      (= (first (first p)) '*)
+    [p s]
+    (def variables (atom {}))
+    (defn match-helper [p s]
       (cond
+        (or (atom? p) (atom? s)) false
+        (empty? p) (empty? s)
+        (atom? (first p))
         (and (not (empty? s))
+             (= (first p) (first s))
              (match-helper (rest p) (rest s)))
-        (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (list (first s)))))
-          true)
-        (match-helper (rest p) s)
-        (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (list))))
-          true)
+        ; complex patterns
         (and (not (empty? s))
-             (match-helper p (rest s)))
-        (do
-          (swap! variables (fn [vs] (assoc vs
-                                           (second (first p)) 
-                                           (cons (first s) (vs (second (first p)))))))
-          true))
-      (not (empty? s))
-      (when-let [update-d ((resolve (first (first p))) @variables (first s))]
+             (= (count (first p)) 2)
+             (= (first (first p)) '?))
         (when (match-helper (rest p) (rest s))
-          (swap! variables (fn [vs] (assoc (merge vs update-d) (second (first p)) (first s))))
-          true))
-      :else false))
-  (if (match-helper p s) @variables false))
+          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
+          true)
+        (and (= (count (first p)) 2)
+             (= (first (first p)) '*))
+        (cond
+          (and (not (empty? s))
+               (match-helper (rest p) (rest s)))
+          (do
+            (swap! variables (fn [vs] (assoc vs (second (first p)) (list (first s)))))
+            true)
+          (match-helper (rest p) s)
+          (do
+            (swap! variables (fn [vs] (assoc vs (second (first p)) (list))))
+            true)
+          (and (not (empty? s))
+               (match-helper p (rest s)))
+          (do
+            (swap! variables (fn [vs] (assoc vs
+                                             (second (first p)) 
+                                             (cons (first s) (vs (second (first p)))))))
+            true))
+        (and (not (empty? s))
+             (= (count (first p)) 2)
+             (resolve (first (first p))))
+        (when-let [update-d ((resolve (first (first p))) @variables (first s))]
+          (when (match-helper (rest p) (rest s))
+            (swap! variables (fn [vs] (assoc (merge vs update-d) (second (first p)) (first s))))
+            true))
+        :else false))
+    (if (match-helper p s) @variables false))
+  (basic-match-test match-state)
+  (basic-pattern-match-test match-state)
+  (is (not (match-state '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
+  (function-pattern-match-test match-state chapter3.match/=1?-state)
+  (star-pattern-match-test match-state chapter3.match/=1?-state))
