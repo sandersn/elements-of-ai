@@ -35,6 +35,13 @@
 (defn function-pattern-match-test [match]
   (is (= {'x 1 'y 2} (match '((chapter3.match/=1? x) (? y) 3) '(1 2 3))))
   (is (not (match '((chapter3.match/=1? x) 2 3) '(2 2 3)))))
+(defn star-pattern-match-test [match]
+  (is (= {'x '(the whole thing)} (match '((* x)) '(the whole thing))))
+  (is (= {'x '(whole thing) 'y 'the} (match '((? y) (* x)) '(the whole thing))))
+  (is (not (match '(this (* x)) '(the whole thing))))
+  (is (= {'x '(thing) 'y 'whole} (match '(the (? y) (* x)) '(the whole thing))))
+  (is (= {'x '()} (match '(the whole thing (* x)) '(the whole thing))))
+  (is (not (match '(the (chapter3.match/=1? y) thing (* x)) '(the whole thing)))))
 
 (with-test
   (defn match2 [p s]
@@ -166,8 +173,9 @@
     (if (match-helper p s) @variables false))
   (basic-match-test match)
   (basic-pattern-match-test match)
-  (is (not (match '(1 (2) 3) '(1 (2) 3))))
-  (function-pattern-match-test match))
+  (is (not (match '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
+  (function-pattern-match-test match)
+  (star-pattern-match-test match))
 (defn match-state
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
   [p s]
