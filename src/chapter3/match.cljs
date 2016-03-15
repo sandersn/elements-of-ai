@@ -34,8 +34,8 @@
 (defn =1? [x] (= x 1))
 (defn =1?-state [d x] (and (= x 1) (assoc d 'x 'is-1)))
 (defn function-pattern-match-test [match f]
-  (is (= {'x 1 'y 2} (match (cons (cons f '(x)) '((? y) 3)) '(1 2 3))))
-  (is (not (match (cons (cons f '(x)) '(2 3)) '(2 2 3)))))
+  (is (= {'x 1 'y 2} (match '((chapter3.match/=1? x) (? y) 3) '(1 2 3))))
+  (is (not (match '((chapter3.match/=1? x) 2 3) '(2 2 3)))))
 (defn star-pattern-match-test [match f]
   (is (= {'x '(the whole thing)} (match '((* x)) '(the whole thing))))
   (is (= {'x '(whole thing) 'y 'the} (match '((? y) (* x)) '(the whole thing))))
@@ -228,5 +228,6 @@
   (basic-match-test match-state)
   (basic-pattern-match-test match-state)
   (is (not (match-state '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
-  (function-pattern-match-test match-state chapter3.match/=1?-state)
+  (is (= {'x 1 'y 2} (match-state '((chapter3.match/=1?-state x) (? y) 3) '(1 2 3))))
+  (is (not (match-state '((chapter3.match/=1?-state x) 2 3) '(2 2 3))))
   (star-pattern-match-test match-state chapter3.match/=1?-state))
