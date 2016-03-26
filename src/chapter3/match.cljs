@@ -32,7 +32,6 @@
   (is (not (match '(1 (! x) 3) '(1 (2) 3))))
   (is (not (match '((? x) 3) '(1 2)))))
 (defn =1? [x] (= x 1))
-(defn =1?-state [d x] (and (= x 1) (assoc d 'x 'is-1)))
 (defn function-pattern-match-test [match f]
   (is (= {'x 1 'y 2} (match '((chapter3.match/=1? x) (? y) 3) '(1 2 3))))
   (is (not (match '((chapter3.match/=1? x) 2 3) '(2 2 3)))))
@@ -43,6 +42,24 @@
   (is (= {'x '(thing) 'y 'whole} (match '(the (? y) (* x)) '(the whole thing))))
   (is (= {'x '()} (match '(the whole thing (* x)) '(the whole thing))))
   (is (not (match (cons 'the (cons (cons f '(y)) (cons 'thing ()))) '(the whole thing)))))
+(defn =1?-newentry [d x] 
+  (and (= x 1) (assoc d 'z 'x-is-1)))
+(defn =1?-update [d x] 
+  (and (= x 2) (assoc d 'z (+ 1 (d 'x)))))
+(defn =1?-update1 [d x] 
+  (and (= x 2) (assoc d 'a (+ 1 (d 'x)))))
+(defn =1?-update2 [d x] 
+  (and (= x 3) (assoc d 'b (+ (d 'a) (d 'y)))))
+(defn =1?-nostar [d x] 
+  (and (= x 3) (assoc d 'a (d 'x))))
+(defn state-pattern-match-test [match]
+  (is (= {'x 1 'y 1 'z 'x-is-1} (match '((? x) (chapter3.match/=1?-newentry y) 3) '(1 1 3))))
+  (is (not (match '((? x) (chapter3.match/=1?-newentry y) 3) '(1 2 3))))
+  (is (= {'x 1 'y 2 'z 2} (match '((? x) (chapter3.match/=1?-update y) 3) '(1 2 3))))
+  (is (= {'x 1 'y 2 'z 3 'a 2 'b 4} (match '((? x) (chapter3.match/=1?-update1 y) (chapter3.match/=1?-update2 z)) '(1 2 3))))
+  ; * isn't captured until after resolve matches have a chance to look at the state
+  (is (= {'x '(1) 'z 3 'a nil} (match '((* x) 2 (chapter3.match/=1?-nostar z)) '(1 2 3))))
+)
 
 (with-test
   (defn match2 [p s]
@@ -194,9 +211,9 @@
         (and (not (empty? s))
              (= (count (first p)) 2)
              (= (first (first p)) '?))
-        (when (match-helper (rest p) (rest s))
+        (do
           (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-          true)
+          (match-helper (rest p) (rest s)))
         (and (= (count (first p)) 2)
              (= (first (first p)) '*))
         (cond
@@ -220,14 +237,15 @@
              (= (count (first p)) 2)
              (resolve (first (first p))))
         (when-let [update-d ((resolve (first (first p))) @variables (first s))]
-          (when (match-helper (rest p) (rest s))
-            (swap! variables (fn [vs] (assoc (merge vs update-d) (second (first p)) (first s))))
-            true))
+          (swap! variables (fn [vs] (assoc (merge vs update-d) (second (first p)) (first s))))         
+          (match-helper (rest p) (rest s)))
         :else false))
     (if (match-helper p s) @variables false))
   (basic-match-test match-state)
   (basic-pattern-match-test match-state)
   (is (not (match-state '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
-  (is (= {'x 1 'y 2} (match-state '((chapter3.match/=1?-state x) (? y) 3) '(1 2 3))))
-  (is (not (match-state '((chapter3.match/=1?-state x) 2 3) '(2 2 3))))
-  (star-pattern-match-test match-state chapter3.match/=1?-state))
+  (is (= {'x 1 'y 2 'z 'x-is-1} (match-state '((chapter3.match/=1?-newentry x) (? y) 3) '(1 2 3))))
+  (is (not (match-state '((chapter3.match/=1?-newentry x) 2 3) '(2 2 3))))
+  (star-pattern-match-test match-state chapter3.match/=1?-newentry)
+  (state-pattern-match-test match-state)
+  )
