@@ -35,6 +35,16 @@
   ['(d (diff-const-e1-rule f) (diff-const-e2-rule e2))
    (fn [d] 0)
    "diff-const-rule"])
+(defn diff-product-e3-rule [d x]
+  (and (not (atom? x))
+       (when-let [d2 (match-state '(* (? e1) (? e2)) x)]
+         (merge d d2))))
+(def diff-product-rule
+  ['(d (diff-product-e3-rule e3) (? v1))
+   (fn [d] (list '+
+                 (list '* (d 'e2) (list 'd (d 'e1) (d 'v1)))
+                 (list '* (d 'e1) (list 'd (d 'e2) (d 'v1)))))
+   "diff-product-rule"])
 ; other rules go here ...
 
 ; TODO: Clojure HAS to have a class/record facility to do this...
