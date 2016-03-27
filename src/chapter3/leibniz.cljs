@@ -45,11 +45,21 @@
                  (list '* (d 'e2) (list 'd (d 'e1) (d 'v1)))
                  (list '* (d 'e1) (list 'd (d 'e2) (d 'v1)))))
    "diff-product-rule"])
+(defn diff-power-e3-rule [d x]
+  (and (not (atom? x))
+       (when-let [d2 (match-state '(exp (? e1) (number? e2)) x)]
+         (merge d d2))))
+(def diff-power-rule
+  ['(d (diff-power-e3-rule e3) (? v1))
+   (fn [d] (list '* (d 'e2)
+                 (list '* (list 'exp (d 'e1) (list 'dec (d 'e2)))
+                       (list 'd (d 'e1) (d 'v1)))))
+   "diff-power-rule"])
 ; other rules go here ...
 
 ; TODO: Clojure HAS to have a class/record facility to do this...
 (def rule-pattern first)
-(defn rule-action [rule] second)
+(def rule-action second)
 (defn rule-name [rule] (nth rule 2))
 
 (def rules
