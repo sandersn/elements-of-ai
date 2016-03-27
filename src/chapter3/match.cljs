@@ -1,5 +1,5 @@
 (ns chapter3.match
-  (:refer clojure.test :only [with-test is deftest]))
+  (:refer clojure.test :only [with-test is]))
 (with-test
   (defn atom? [x] 
     (not (or (list? x) (nil? x))))

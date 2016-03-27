@@ -1,19 +1,40 @@
 (ns chapter3.leibniz
-  (:refer chapter3.match :only [match match-state atom?]))
+  (:refer chapter3.match :only [match match-state atom?])
+  (:refer clojure.test :only [with-test is]))
 (defn nested-diff-sum? [d v]
-  (and (not (atom? v)) (match '(+ (? e1) (? e2)) v)))
-(defn nested-diff-x1? [d v]
-  {:e1 v})
-(defn nested-diff-x2? [d v]
-  (= v (d :e1)))
+  (and (not (atom? v)) 
+       (when-let [d2 (match-state '(+ (? e1) (? e2)) v)]
+         (merge d d2))))
 (def diff-sum-rule
   ['(d (nested-diff-sum? e3) (? v1))
-   #(list '+ (list 'd (% :e1) (% :v1)) (list 'd (% :e2) (% :v1)))
+   #(list '+ (list 'd (% 'e1) (% 'v1)) (list 'd (% 'e2) (% 'v1)))
    "diff-sum-rule"])
+(defn nested-diff-x1? [d v] d)
+(defn nested-diff-x2? [d v]
+  (and (= v (d 'e1)) d))
 (def diff-x-rule
   ['(d (nested-diff-x1? e1) (nested-diff-x2? e2))
-   1
+   (fn [d] 1)
    "diff-x-rule"])
+(with-test
+  (defn exists-tree? [f v1]
+    (some (fn [x] 
+            (if (atom? x)
+              (= x v1)
+              (exists-tree? x v1)))
+          f))
+  (is (exists-tree? '(1 2 3) 1))
+  (is (not (exists-tree? '(1 2 3) 4)))
+  (is (not (exists-tree? '((2 3) (4 (5) 3) 2 2) 1)))
+  (is (exists-tree? '((2 1) (4 (5) 3) 2 2) 1))
+  (is (exists-tree? '((2 3) (4 (1) 3) 2 2) 1))
+  (is (exists-tree? '((2 3) (4 (5) 3) 2 1) 1)))
+(defn diff-const-e1-rule [d x] (assoc d 'e1 x))
+(defn diff-const-e2-rule [d x] (and (not (exists-tree? (d 'e1) x)) d))
+(def diff-const-rule
+  ['(d (diff-const-e1-rule f) (diff-const-e2-rule e2))
+   (fn [d] 0)
+   "diff-const-rule"])
 ; other rules go here ...
 
 ; TODO: Clojure HAS to have a class/record facility to do this...
@@ -22,7 +43,7 @@
 (defn rule-name [rule] (nth rule 2))
 
 (def rules
-  [[diff-sum-rule diff-x-rule]
+  [[diff-sum-rule diff-x-rule diff-const-rule]
    [; TODO: arithmetic simplication rules go here
     ]])
    
