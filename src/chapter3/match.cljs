@@ -2,11 +2,12 @@
   (:refer clojure.test :only [with-test is]))
 (with-test
   (defn atom? [x] 
-    (not (or (list? x) (nil? x))))
+    (not (or (list? x) (nil? x) (instance? clojure.lang.Cons x))))
   (is (atom? 12))
   (is (not (atom? '())))
   (is (not (atom? nil)))
   (is (not (atom? '(1))))
+  (is (not (atom? (cons 1 '(2 3)))))
   (is (atom? [])) ; this is basically wrong -- don't use vectors with chapter3.match
   (is (atom? {}))
   (is (atom? true)))
@@ -32,7 +33,7 @@
   (is (not (match '(1 (! x) 3) '(1 (2) 3))))
   (is (not (match '((? x) 3) '(1 2)))))
 (defn =1? [x] (= x 1))
-(defn function-pattern-match-test [match f]
+(defn function-pattern-match-test [match]
   (is (= {'x 1 'y 2} (match '((chapter3.match/=1? x) (? y) 3) '(1 2 3))))
   (is (not (match '((chapter3.match/=1? x) 2 3) '(2 2 3)))))
 (defn star-pattern-match-test [match f]
@@ -41,7 +42,8 @@
   (is (not (match '(this (* x)) '(the whole thing))))
   (is (= {'x '(thing) 'y 'whole} (match '(the (? y) (* x)) '(the whole thing))))
   (is (= {'x '()} (match '(the whole thing (* x)) '(the whole thing))))
-  (is (not (match (cons 'the (cons (cons f '(y)) (cons 'thing ()))) '(the whole thing)))))
+  (println "function:" f)
+  (is (not (match (list 'the (list f 'y) 'thing) '(the whole thing)))))
 (defn =1?-newentry [d x] 
   (and (= x 1) (assoc d 'z 'x-is-1)))
 (defn =1?-update [d x] 
@@ -138,7 +140,7 @@
   (basic-match-test match5)
   (basic-pattern-match-test match5)
   (is (= {} (match5 '(1 (2) 3) '(1 (2) 3))))
-  (function-pattern-match-test match5 chapter3.match/=1?))
+  (function-pattern-match-test match5))
 (with-test
   (defn match
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
@@ -192,8 +194,8 @@
   (basic-match-test match)
   (basic-pattern-match-test match)
   (is (not (match '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
-  (function-pattern-match-test match chapter3.match/=1?)
-  (star-pattern-match-test match chapter3.match/=1?))
+  (function-pattern-match-test match)
+  (star-pattern-match-test match 'chapter3.match/=1?))
 (with-test
   (defn match-state
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
@@ -246,6 +248,6 @@
   (is (not (match-state '(1 (2) 3) '(1 (2) 3))) "malformed pattern")
   (is (= {'x 1 'y 2 'z 'x-is-1} (match-state '((chapter3.match/=1?-newentry x) (? y) 3) '(1 2 3))))
   (is (not (match-state '((chapter3.match/=1?-newentry x) 2 3) '(2 2 3))))
-  (star-pattern-match-test match-state chapter3.match/=1?-newentry)
+  (star-pattern-match-test match-state 'chapter3.match/=1?-newentry)
   (state-pattern-match-test match-state)
   )
