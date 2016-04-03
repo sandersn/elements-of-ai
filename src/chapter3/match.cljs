@@ -42,7 +42,6 @@
   (is (not (match '(this (* x)) '(the whole thing))))
   (is (= {'x '(thing) 'y 'whole} (match '(the (? y) (* x)) '(the whole thing))))
   (is (= {'x '()} (match '(the whole thing (* x)) '(the whole thing))))
-  (println "function:" f)
   (is (not (match (list 'the (list f 'y) 'thing) '(the whole thing)))))
 (defn =1?-newentry [d x] 
   (and (= x 1) (assoc d 'z 'x-is-1)))

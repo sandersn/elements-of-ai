@@ -57,6 +57,15 @@
                  (list '* (list 'exp (d 'e1) (list 'dec (d 'e2)))
                        (list 'd (d 'e1) (d 'v1)))))
    "diff-power-rule"])
+(def math-ladd-zero-rule ['(+ (? x) 0) #(% 'x) "math-ladd-zero-rule"])
+(def math-radd-zero-rule ['(+ 0 (? x)) #(% 'x) "math-radd-zero-rule"])
+(def math-lprod-zero-rule ['(* (? x) 0) (fn [d] 0) "math-lprod-zero-rule"])
+(def math-rprod-zero-rule ['(* 0 (? x)) (fn [d] 0) "math-rprod-zero-rule"])
+(def math-lprod-id-rule ['(* (? x) 1) #(% 'x) "math-lprod-id-rule"])
+(def math-rprod-id-rule ['(* 1 (? x)) #(% 'x) "math-rprod-id-rule"])
+(def math-exp-zero-rule ['(exp (? x) 0) (fn [d] 1) "math-exp-zero-rule"])
+(def math-exp-id-rule ['(exp (? x) 1) #(% 'x) "math-exp-id-rule"])
+(def math-dec-rule ['(dec (number-state? x)) #(dec (% 'x)) "math-dec-rule"])
 ; other rules go here ...
 
 ; TODO: Clojure HAS to have a class/record facility to do this...
@@ -66,7 +75,7 @@
 
 (def rules
   [[diff-sum-rule diff-x-rule diff-const-rule diff-product-rule diff-power-rule]
-   [; TODO: arithmetic simplification rules go here
+   [math-ladd-zero-rule math-radd-zero-rule math-lprod-zero-rule math-rprod-zero-rule math-lprod-id-rule math-rprod-id-rule math-exp-zero-rule math-exp-id-rule math-dec-rule
     ]])
    
 ;;; control scheme ;;;
@@ -80,7 +89,7 @@
       (when-let [temp (try-rule-on-list rule (rest expressions))]
         (cons (first expressions) temp)))))
 (defn fire [rule d]
-  (println (rule-name rule) "fires.")
+  ;(println (rule-name rule) "fires.")
   ((rule-action rule) d))
 (defn try-rule [rule expression]
   (if (atom? expression)
@@ -112,8 +121,10 @@
           (recur formula (rest rules))))))
   (is (= 0 (control '(d 2 x) rules)))
   (is (= 1 (control '(d x x) rules)))
-  (is (= '(+ (* x 0) (* 2 1)) (control '(d (* 2 x) x) rules)))
-  (is (= '(+ (* x 0) (* 2 1)) (control '(+ (* x (d 2 x)) (* 2 1)) rules)))
-  (is (= '(+ (* x 0) (* 2 1)) (control (control '(d (* 2 x) x) rules) rules)))
-  (is (= '(+ (* 2 (* (exp x (dec 2)) 1)) (+ (* x 0) (* 2 1))) (control '(d (+ (exp x 2) (* 2 x)) x) rules)))
+  (is (= 2 (control '(d (* 2 x) x) rules)))
+  (is (= 2 (control '(+ (* x (d 2 x)) (* 2 1)) rules)))
+  (is (= 2 (control (control '(d (* 2 x) x) rules) rules)))
+  (is (= 1 (control '(dec 2) rules)))
+  (is (= '(+ (* 2 x) 2) (control '(d (+ (exp x 2) (* 2 x)) x) rules)))
+  (is (= 2 (control '(+ (* x 0) (* 2 1)) rules)))
   )
