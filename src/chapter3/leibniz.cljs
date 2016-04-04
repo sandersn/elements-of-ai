@@ -18,14 +18,14 @@
    (fn [d] 1)
    "diff-x-rule"))
 (with-test
-  (defn exists-tree? [f v1]
-    (if (atom? f)
-      (= f v1)
-      (some (fn [x] 
-              (if (atom? x)
-                (= x v1)
-                (exists-tree? x v1)))
-            f)))
+  (defn exists-tree? [tree x]
+    (if (atom? tree)
+      (= tree x)
+      (some (fn [child] 
+              (if (atom? child)
+                (= child x)
+                (exists-tree? child x)))
+            tree)))
   (is (exists-tree? '(1 2 3) 1))
   (is (not (exists-tree? '(1 2 3) 4)))
   (is (not (exists-tree? '((2 3) (4 (5) 3) 2 2) 1)))
