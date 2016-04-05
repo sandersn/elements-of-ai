@@ -97,7 +97,7 @@
          (= (first (first p)) '?)
          (match4 (rest p) (rest s)))
         (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
+          (swap! variables (fn [vs] (conj vs [(second (first p)) (first s)])))
           true)
         :else false))
     (if (match-helper p s) @variables false))
@@ -111,6 +111,9 @@
   won't actually work there."
     [p s]
     (def variables (atom {}))
+    (defn update-variables [p s]
+      (swap! variables (fn [vs] (conj vs [(second (first p)) (first s)])))
+      true)
     (defn match-helper [p s]
       (cond
         (or (atom? p) (atom? s)) false
@@ -121,9 +124,7 @@
          (= (count (first p)) 2)
          (= (first (first p)) '?)
          (match5 (rest p) (rest s)))
-        (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-          true)
+        (update-variables p s)
         (and
          (not (atom? (first p)))
          (= (count (first p)) 2)
@@ -131,9 +132,7 @@
          (resolve (first (first p)))
          ((resolve (first (first p))) (first s))
          (match5 (rest p) (rest s)))
-        (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-          true)
+        (update-variables p s)
         :else false))
     (if (match-helper p s) @variables false))
   (basic-match-test match5)
@@ -145,6 +144,9 @@
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
     [p s]
     (def variables (atom {}))
+    (defn update-variables [p f]
+      (swap! variables (fn [vs] (assoc vs (second (first p)) (f vs))))
+      true)
     (defn match-helper [p s]
       (cond
         (or (atom? p) (atom? s)) false
@@ -165,29 +167,19 @@
         (cond
           (and (not (empty? s))
                (match-helper (rest p) (rest s)))
-          (do
-            (swap! variables (fn [vs] (assoc vs (second (first p)) (list (first s)))))
-            true)
+          (update-variables p (fn [v] (list (first s))))
           (match-helper (rest p) s)
-          (do
-            (swap! variables (fn [vs] (assoc vs (second (first p)) (list))))
-            true)
+          (update-variables p (fn [v] (list)))
           (and (not (empty? s))
                (match-helper p (rest s)))
-          (do
-            (swap! variables (fn [vs] (assoc vs
-                                             (second (first p)) 
-                                             (cons (first s) (vs (second (first p)))))))
-            true))
+          (update-variables p #(cons (first s) (% (second (first p))))))
         (and
          (not (empty? s))
          (= (count (first p)) 2)
          (resolve (first (first p)))
          ((resolve (first (first p))) (first s))
          (match-helper (rest p) (rest s)))
-        (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
-          true)
+        (update-variables p (fn [v] (first s)))
         :else false))
     (if (match-helper p s) @variables false))
   (basic-match-test match)
@@ -200,6 +192,9 @@
   "Note: ClojureScript doesn't have resolve so arbitrary predicates won't work there."
     [p s]
     (def variables (atom {}))
+    (defn update-variables [p f]
+      (swap! variables (fn [vs] (assoc vs (second (first p)) (f vs))))
+      true)
     (defn match-helper [p s]
       (cond
         (or (atom? p) (atom? s)) false
@@ -213,32 +208,27 @@
              (= (count (first p)) 2)
              (= (first (first p)) '?))
         (do
-          (swap! variables (fn [vs] (assoc vs (second (first p)) (first s))))
+          (swap! variables (fn [vs] (conj vs [(second (first p)) (first s)])))
           (match-helper (rest p) (rest s)))
         (and (= (count (first p)) 2)
              (= (first (first p)) '*))
         (cond
           (and (not (empty? s))
                (match-helper (rest p) (rest s)))
-          (do
-            (swap! variables (fn [vs] (assoc vs (second (first p)) (list (first s)))))
-            true)
+    
+          (update-variables p (fn [v] (list (first s))))
           (match-helper (rest p) s)
-          (do
-            (swap! variables (fn [vs] (assoc vs (second (first p)) (list))))
-            true)
+          
+          (update-variables p (fn [v] (list)))
           (and (not (empty? s))
                (match-helper p (rest s)))
-          (do
-            (swap! variables (fn [vs] (assoc vs
-                                             (second (first p)) 
-                                             (cons (first s) (vs (second (first p)))))))
-            true))
+          
+          (update-variables p #(cons (first s) (% (second (first p))))))
         (and (not (empty? s))
              (= (count (first p)) 2)
              (resolve (first (first p))))
         (when-let [update-d ((resolve (first (first p))) @variables (first s))]
-          (swap! variables (fn [vs] (assoc (merge vs update-d) (second (first p)) (first s))))         
+          (swap! variables (fn [vs] (conj (merge vs update-d) [(second (first p)) (first s)])))         
           (match-helper (rest p) (rest s)))
         :else false))
     (if (match-helper p s) @variables false))
