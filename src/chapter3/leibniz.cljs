@@ -59,7 +59,6 @@
                  (list '* (list 'exp (d 'e1) (list 'dec (d 'e2)))
                        (list 'd (d 'e1) (d 'v1)))))
    "diff-power-rule"))
-(def ladd-zero-rule2 (->rule '(+ (? x) 0) #(% 'x) "ladd-zero-rule"))
 (def ladd-zero-rule (->rule '(+ (? x) 0) #(% 'x) "ladd-zero-rule"))
 (def radd-zero-rule (->rule '(+ 0 (? x)) #(% 'x) "radd-zero-rule"))
 (def add-const-rule (->rule '(+ (number-state? x) (number-state? y)) #(+ (% 'x) (% 'y)) "add-const-rule"))

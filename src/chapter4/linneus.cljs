@@ -5,17 +5,12 @@
 (def isa (atom {}))
 (def includes (atom {}))
 (with-test
-  (defn add-to-list [aname x]
-    (fn [d]
-      (if (d aname)
-        (update-in d [aname] conj x)
-        (conj d [aname #{x}]))))
-  (is (= {'a #{1}} ((add-to-list 'a 1) {})))
-  (is (= {'a #{1 2}} ((add-to-list 'a 2) {'a #{1}}))))
-(defn add-superset [aname x]
-  (swap! isa (add-to-list aname x)))
-(defn add-subset [aname x]
-  (swap! includes (add-to-list aname x)))
+  (defn add-to-list [aname x d]
+    (if (d aname)
+      (update-in d [aname] conj x)
+      (conj d [aname #{x}])))
+  (is (= {'a #{1}} (add-to-list 'a 1 {})))
+  (is (= {'a #{1 2}} (add-to-list 'a 2 {'a #{1}}))))
 (with-test
   (defn isa-test [isa x y n]
     (if (zero? n)
@@ -29,3 +24,25 @@
   (is (not (isa-test {'d #{'mammal}} 'dog 'bug 100)))
   (is (isa-test {'dog #{'mammal} 'mammal #{'animal}} 'dog 'animal 2))
   (is (not (isa-test {'dog #{'mammal} 'mammal #{'animal}} 'dog 'animal 1))))
+(with-test
+  (defn article? [article]
+    (contains? #{'a 'an 'the 'that 'this 'those 'these} article))
+  (is (article? 'a))
+  (is (not (article? 'wat))))
+(with-test
+  (defn interpret [text isa includes article]
+    (if-let [d (match '((article? article1) (? x) is (article? article2) (? y)) text)]
+      (do
+        (println "I understand.")
+        ['continue (add-to-list (d 'x) (d 'y) isa) (add-to-list (d 'y) (d 'x) includes) (assoc article (d 'x) (d 'article1) (d 'y) (d 'article2))])
+      'bye))
+  (is (= '[continue {dog #{animal}} {animal #{dog}} {dog a, animal an}]
+         (interpret '(a dog is an animal) {} {} {}))))
+(defn linneus []
+  (println "This is Linneus. Please talk to me.")
+  (loop [isa {} includes {} article {}]
+    (println "--> ")
+    (let [[result isa includes article] (interpret (read))]
+      (if (= result 'bye)
+        'goodbye
+        (recur isa includes article)))))
