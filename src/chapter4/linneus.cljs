@@ -1,9 +1,6 @@
 (ns chapter4.linneus
   (:refer chapter3.match :only [match match-state atom?])
   (:refer clojure.test :only [with-test is run-tests]))
-;TODO: This is probably wrong -- should be locally scoped inside the conversation loop
-(def isa (atom {}))
-(def includes (atom {}))
 (with-test
   (defn add-to-list [aname x d]
     (if (d aname)
