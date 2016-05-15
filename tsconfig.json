@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true
+    },
+    "files": [
+        "src/chapter3/match.ts",
+        "src/chapter3/test.ts",
+        "typings/jscons.d.ts"
+    ]
+}

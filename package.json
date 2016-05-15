@@ -1,0 +1,29 @@
+{
+  "name": "elements-of-ai",
+  "version": "1.0.0",
+  "description": "Example implementations from Elements of Artificial Intelligence by Steven Tanimoto",
+  "main": "match.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "jscons": "^1.0.3",
+    "source-map-support": "^0.4.0"
+  },
+  "devDependencies": {
+    "jasmine-core": "^2.4.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sandersn/elements-of-ai.git"
+  },
+  "author": "Nathan Shively-Sanders",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sandersn/elements-of-ai/issues"
+  },
+  "homepage": "https://github.com/sandersn/elements-of-ai#readme"
+}
