@@ -1,11 +1,11 @@
 declare module "jscons" {
-    class Cons<T> {
-        static from<U>(xs: U[]): Cons<U>;
-        static instanceOf<U>(cons: any): cons is Cons<U>;
+    class Cons {
+        static from(xs: any[]): Cons;
+        static instanceOf(cons: any): cons is Cons;
 
-        constructor(head: T, tail: Cons<T>);
-        head(): T;
-        tail(): Cons<T>;
+        constructor(head: any, tail: Cons);
+        head(): any;
+        tail(): Cons;
     }
     export = Cons;
 }
