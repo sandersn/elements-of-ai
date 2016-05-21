@@ -1,6 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { isAtom, match2 } from "./match";
-import Cons = require("jscons");
+import * as Cons from "jscons";
 describe("isAtom", () => {
     it("says number is an atom", () => {
         expect(isAtom(12)).toBe(true);
