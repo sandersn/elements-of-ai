@@ -41,9 +41,20 @@ function basicMatchTest(match: (p: any, s: any) => boolean) {
         expect(match(Cons.from([1]), Cons.from([]))).toBe(false);
     }); 
 }
+function recursiveMatchTest(match: (p: any, s: any) => boolean) {
+    it("matches recursively", () => {
+        expect(match(Cons.from([1, Cons.from([2]), 3]),
+                     Cons.from([1, Cons.from([2]), 3]))).toBe(true);
+    });
+    it("un-matches recursively", () => {
+        expect(match(Cons.from([1, Cons.from([2, "nope"]), 3]),
+                     Cons.from([1, Cons.from([2, "not", "really"]), 3]))).toBe(false);
+    });
+}
 describe("match2", () => {
     it("matches bare atoms", () => {
         expect(match2(12, 12)).toBe(true);
     });
     basicMatchTest(match2);
+    recursiveMatchTest(match2);
 });
