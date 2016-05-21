@@ -1,5 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { isAtom, match2 } from "./match";
+import { l } from "../util";
 import * as Cons from "jscons";
 describe("isAtom", () => {
     it("says number is an atom", () => {
@@ -26,29 +27,28 @@ describe("isAtom", () => {
 });
 function basicMatchTest(match: (p: any, s: any) => boolean) {
     it("doesn't match a list against a scalar pattern", () => {
-        expect(match(12, Cons.from([12]))).toBe(false);
+        expect(match(12, l(12))).toBe(false);
     });
     it("doesn't match a scalar against a real pattern", () => {
-        expect(match(Cons.from([12]), 12)).toBe(false);
+        expect(match(l(12), 12)).toBe(false);
     });
     it("empty list matches an empty pattern", () => {
-        expect(match(Cons.from([]), Cons.from([]))).toBe(true);
+        expect(match(null, null)).toBe(true);
     }); 
     it("non-empty list doesn't match an empty pattern", () => {
-        expect(match(Cons.from([]), Cons.from([1]))).toBe(false);
+        expect(match(null, l(1))).toBe(false);
     }); 
     it("empty list doesn't match a non-empty pattern", () => {
-        expect(match(Cons.from([1]), Cons.from([]))).toBe(false);
+        expect(match(l(1), null)).toBe(false);
     }); 
 }
 function recursiveMatchTest(match: (p: any, s: any) => boolean) {
     it("matches recursively", () => {
-        expect(match(Cons.from([1, Cons.from([2]), 3]),
-                     Cons.from([1, Cons.from([2]), 3]))).toBe(true);
+        expect(match(l(1, l(2), 3), l(1, l(2), 3))).toBe(true);
     });
     it("un-matches recursively", () => {
-        expect(match(Cons.from([1, Cons.from([2, "nope"]), 3]),
-                     Cons.from([1, Cons.from([2, "not", "really"]), 3]))).toBe(false);
+        expect(match(l(1, l(2, "nope"), 3),
+                     l(1, l(2, "not", "really"), 3))).toBe(false);
     });
 }
 describe("match2", () => {
