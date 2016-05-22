@@ -1,7 +1,10 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
-import { isAtom, match2 } from "./match";
-import { l } from "../util";
+import { isAtom, match2, match3 } from "./match";
+import { l, equal } from "../util";
 import * as Cons from "jscons";
+function assert<T>(expected: T, actual: T, message: string) {
+    it(message, () => { expect(expected).toBe(actual) });
+}
 describe("isAtom", () => {
     it("says number is an atom", () => {
         expect(isAtom(12)).toBe(true);
@@ -51,10 +54,20 @@ function recursiveMatchTest(match: (p: any, s: any) => boolean) {
                      l(1, l(2, "not", "really"), 3))).toBe(false);
     });
 }
+describe("equal", () => {
+    assert(false, equal(l(1), null), "[1] /= []");
+    assert(false, equal(null, l(1)), "[] /= [1]");
+    assert(false, equal(l(1), l(1,2)), "[1] /= [1,2]");
+    assert(false, equal(l(1,2), l(1)), "[1,2] /= [1]");
+});
 describe("match2", () => {
     it("matches bare atoms", () => {
         expect(match2(12, 12)).toBe(true);
     });
     basicMatchTest(match2);
     recursiveMatchTest(match2);
+});
+describe("match3", () => {
+    basicMatchTest(match3);
+    recursiveMatchTest(match3);
 });
