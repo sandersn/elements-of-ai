@@ -18,17 +18,6 @@ export function match2(p: any, s: any): boolean {
     return false;
 }
 export function match3(p: any[], s: any[]): boolean {
-    if (isEmpty(p)) {
-        return isEmpty(s);
-    }
-    else if (isAtom(p) || isAtom(s)) {
-        return false;
-    }
-    else if (equal(p[0], s[0])) {
-        return match3(p.slice(1), s.slice(1));
-    }
-    else if (p[0] === "?") {
-        return match3(p.slice(1), s.slice(1));
-    }
-    return false;
+    if (p.length !== s.length) return false;
+    return p.every((x,i) => x === "?" || equal(x, s[i]));
 }
