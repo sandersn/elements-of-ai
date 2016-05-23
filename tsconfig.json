@@ -5,7 +5,6 @@
     "files": [
         "src/util.ts",
         "src/chapter3/match.ts",
-        "src/chapter3/test.ts",
-        "typings/jscons.d.ts"
+        "src/chapter3/test.ts"
     ]
 }

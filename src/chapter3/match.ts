@@ -1,7 +1,9 @@
-import Cons = require("jscons");
 import { equal } from "../util";
 export function isAtom(x: any) {
-    return x === null || !Cons.instanceOf(x);
+    return !Array.isArray(x) || x.length === 0;
+}
+export function isEmpty(x: any) {
+    return Array.isArray(x) && x.length === 0;
 }
 export function match2(p: any, s: any): boolean {
     if (isAtom(p)) {
@@ -10,23 +12,23 @@ export function match2(p: any, s: any): boolean {
     else if (isAtom(s)) {
         return false;
     }
-    else if (match2(p.head(), s.head())) {
-        return match2(p.tail(), s.tail());
+    else if (match2(p[0], s[0])) {
+        return match2(p.slice(1), s.slice(1));
     }
     return false;
 }
-export function match3(p: Cons, s: Cons): boolean {
-    if (p === null) {
-        return s === null;
+export function match3(p: any[], s: any[]): boolean {
+    if (isEmpty(p)) {
+        return isEmpty(s);
     }
     else if (isAtom(p) || isAtom(s)) {
         return false;
     }
-    else if (equal(p.head(), s.head())) {
-        return match3(p.tail(), s.tail());
+    else if (equal(p[0], s[0])) {
+        return match3(p.slice(1), s.slice(1));
     }
-    else if (p.head() === "?") {
-        return match3(p.tail(), s.tail());
+    else if (p[0] === "?") {
+        return match3(p.slice(1), s.slice(1));
     }
     return false;
 }

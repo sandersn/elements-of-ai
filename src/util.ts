@@ -1,18 +1,13 @@
-import * as Cons from "jscons";
-export function l(...xs: any[]): Cons {
-    return Cons.from(xs);
-}
-export function equal(x: Cons | number | string | boolean, y: Cons | number | string | boolean): boolean {
-    if (x === null && y === null) {
-        return true;
+export function equal(x: any[] | number | string | boolean, y: any[] | number | string | boolean): boolean {
+    if (x === y) return true;
+    else if (x == null || y == null) return false;
+    else if (Array.isArray(x) && Array.isArray(y)) {
+        if (x.length !== y.length) return false;
+        for(var i = 0; i < x.length; i++) {
+            if (!equal(x[i], y[i])) {
+                return false;
+            }
+        }
     }
-    else if (x === null || y === null) {
-        return false;
-    }
-    else if (Cons.instanceOf(x) && Cons.instanceOf(y)) {
-        return equal(x.head(), y.head()) && equal(x.tail(), y.tail());
-    }
-    else {
-        return x === y;
-    }
+    return true;
 }

@@ -7,7 +7,6 @@
     "test": "test"
   },
   "dependencies": {
-    "jscons": "^1.0.3",
     "source-map-support": "^0.4.0"
   },
   "devDependencies": {
