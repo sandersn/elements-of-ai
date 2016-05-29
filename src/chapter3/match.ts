@@ -1,4 +1,4 @@
-import { equal } from "../util";
+import { equal, Map } from "../util";
 export function isAtom(x: any) {
     return !Array.isArray(x) || x.length === 0;
 }
@@ -21,3 +21,20 @@ export function match3(p: any[], s: any[]): boolean {
     if (p.length !== s.length) return false;
     return p.every((x,i) => x === "?" || equal(x, s[i]));
 }
+export function match4(p: any[], s: any[]): Map<any> {
+    if (p.length !== s.length) return;
+    let d: Map<any> = {};
+    if (p.every(matchHelper)) {
+        return d;
+    }
+    function matchHelper(x: any, i: number) {
+        if (equal(x, s[i])) {
+            return true;
+        }
+        else if (x.length === 2 && x[0] === "?") {
+            d[x[1]] = s[i];
+            return true;
+        }
+    }
+}
+

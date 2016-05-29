@@ -1,3 +1,6 @@
+export interface Map<T> { 
+    [s: string]: T;
+}
 export function equal(x: any[] | number | string | boolean, y: any[] | number | string | boolean): boolean {
     if (x === y) return true;
     else if (x == null || y == null) return false;
@@ -8,6 +11,7 @@ export function equal(x: any[] | number | string | boolean, y: any[] | number | 
                 return false;
             }
         }
+        return true;
     }
-    return true;
+    return false;
 }
