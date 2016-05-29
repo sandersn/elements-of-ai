@@ -55,4 +55,43 @@ export function match5(p: any[], s: any[]): Map<any> {
         return d;
     }
 }
+export function match(p: any[], s: any[]): Map<any> {
+    if (!Array.isArray(p) || !Array.isArray(s)) {
+        return;
+    }
+    if (p.length === 0) {
+        return s.length === 0 ? {} : undefined;
+    }
 
+    const d: Map<any> = {};
+    let offset: number = 0;
+    const matchHelper = (x: any, i: number) => {
+        if (equal(x, s[i + offset])) {
+            return true;
+        }
+        else if (x.length === 2 &&
+                 (x[0] === "?" ||
+                  (this && this[x[0]] && this[x[0]](s[i + offset])))) {
+                d[x[1]] = s[i + offset];
+            return true;
+        }
+        else if (x.length === 2 &&
+                 x[0] === "*") {
+            if (i + 1 === p.length) {
+                d[x[1]] = s.slice(i + offset);
+                return true;
+            }
+            for(var j = 1; i + offset + j < s.length; j++) {
+                if (match([p[i + 1]], [s[i + offset + j]])) {
+                    break;
+                }
+            }
+            d[x[1]] = s.slice(i + offset, i + offset + j);
+            offset += j - 1;
+            return true;
+        }
+    }
+    if (p.every(matchHelper)) {
+        return d;
+    }
+}

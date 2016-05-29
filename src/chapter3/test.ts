@@ -1,5 +1,5 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
-import { isAtom, match2, match3, match4, match5 } from "./match";
+import { isAtom, match2, match3, match4, match5, match } from "./match";
 import { equal, Map } from "../util";
 function assert<T>(expected: T, actual: T, message: string) {
     it(message, () => { expect(actual).toBe(expected); });
@@ -98,6 +98,40 @@ function functionPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
             .toBeFalsy();
     });
 }
+function starPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
+    it("star-matches the whole thing", () => {
+        expect(match([["*", 'x']], ["the", 'whole', 'thing'])).toEqual({
+            x: ["the", "whole", "thing"]
+        });
+    });
+    it("prefix matches the whole thing", () => {
+        expect(match([["?", 'y'], ["*", 'x']], ["the", "whole", "thing"])).toEqual({
+            x: ["whole", "thing"],
+            y: "the" });
+    });
+    it("doesn't prefix match unmatching patterns", () => {
+        expect(match(["this", ["*", 'x']], ['the', 'whole', 'thing'])).toBeFalsy();
+    });
+    it("post-prefix matches the whole thing", () => {
+        expect(match(['the', ["?", 'y'], ["*", 'x']], ["the", "whole", "thing"])).toEqual({
+            x: ["thing"],
+            y: "whole" });
+    });
+    it("matches empty at the end", () => {
+        expect(match(['the', 'whole', 'thing', ["*", 'x']], ["the", "whole", "thing"])).toEqual({
+            x: [] });
+    });
+    it("doesn't match a failing function", () => {
+        expect(match(['the', ["isEqual1", 'x'], 'thing'], ["the", "whole", "thing"])).toBeFalsy();
+    });
+    it("matches multiple stars", () => {
+        expect(match([["*", 'x'], "wild", ["?", 'y'], ["*", 'z']],
+                     ["*", "specifies", 'a', 'wild', 'card', 'sequence', 'element'])).toEqual({
+                         x: ["*", 'specifies', 'a'],
+                         y: 'card',
+                         z: ["sequence", "element"]})
+    });
+}
 describe("equal", () => {
     assert(false, equal([1], null), "[1] /= []");
     assert(false, equal(null, [1]), "[] /= [1]");
@@ -130,6 +164,15 @@ describe("match5", () => {
     basicPatternMatchTest(match5);
     functionPatternMatchTest(match5);
     it("allows malformed patterns as literals", () => {
-        expect(match4([1, [2], 3], [1, [2], 3])).toEqual({});
+        expect(match5([1, [2], 3], [1, [2], 3])).toEqual({});
     });
+});
+describe("match", () => {
+    basicMatchTest(match);
+    basicPatternMatchTest(match);
+    functionPatternMatchTest(match);
+    it("allows malformed patterns as literals", () => {
+        expect(match([1, [2], 3], [1, [2], 3])).toEqual({});
+    });
+    starPatternMatchTest(match);
 });
