@@ -1,5 +1,5 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
-import { isAtom, match2, match3, match4 } from "./match";
+import { isAtom, match2, match3, match4, match5 } from "./match";
 import { equal, Map } from "../util";
 function assert<T>(expected: T, actual: T, message: string) {
     it(message, () => { expect(actual).toBe(expected); });
@@ -54,7 +54,7 @@ function recursiveMatchTest(match: (p: any, s: any) => boolean) {
                      [1, [2, "not", "really"], 3])).toBe(false);
     });
 }
-function basicPatternMatchTest(match: (p: any, s: any) => Map<any>) {
+function basicPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
     it("matches a simple wildcard", () => {
         expect(match([1, ["?", "x"], 3], [1, "not really", 3])).toBeTruthy();
     });
@@ -81,6 +81,23 @@ function basicPatternMatchTest(match: (p: any, s: any) => Map<any>) {
     doesntMatch([1, ["!", 'x'], 3], [1, [2], 3]);
     doesntMatch([["?", 'x'], 3], [1, 2]);
 }
+function functionPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
+    const functions: Map<(x: number) => boolean> = {
+        isEqual1: x => x == 1
+    };
+    it("matches simple functions", () => {
+        expect(match.call(functions,
+                          [["isEqual1", 'x'], ["?", 'y'], 3],
+                          [1, 2, 3]))
+            .toEqual({ x: 1, y: 2 });
+    });
+    it("doesn't match failing functions", () => {
+        expect(match.call(functions,
+                          [["isEqual1", 'x'], ["?", 'y'], 3],
+                          [4, 2, 3]))
+            .toBeFalsy();
+    });
+}
 describe("equal", () => {
     assert(false, equal([1], null), "[1] /= []");
     assert(false, equal(null, [1]), "[] /= [1]");
@@ -104,4 +121,15 @@ describe("match3", () => {
 describe("match4", () => {
     basicMatchTest(match4);
     basicPatternMatchTest(match4);
+    it("allows malformed patterns as literals", () => {
+        expect(match4([1, [2], 3], [1, [2], 3])).toEqual({});
+    });
+});
+describe("match5", () => {
+    basicMatchTest(match5);
+    basicPatternMatchTest(match5);
+    functionPatternMatchTest(match5);
+    it("allows malformed patterns as literals", () => {
+        expect(match4([1, [2], 3], [1, [2], 3])).toEqual({});
+    });
 });

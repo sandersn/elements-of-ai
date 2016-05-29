@@ -37,4 +37,22 @@ export function match4(p: any[], s: any[]): Map<any> {
         }
     }
 }
+export function match5(p: any[], s: any[]): Map<any> {
+    if (p.length !== s.length) return;
+    const d: Map<any> = {};
+    const matchHelper = (x: any, i: number) => {
+        if (equal(x, s[i])) {
+            return true;
+        }
+        else if (x.length === 2 &&
+                 (x[0] === "?" ||
+                  (this && this[x[0]] && this[x[0]](s[i])))) {
+                d[x[1]] = s[i];
+            return true;
+        }
+    }
+    if (p.every(matchHelper)) {
+        return d;
+    }
+}
 
