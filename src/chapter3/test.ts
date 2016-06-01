@@ -1,5 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { isAtom, match2, match3, match4, match5, match } from "./match";
+import { shrink } from "./shrink";
 import { equal, Map } from "../util";
 function assert<T>(expected: T, actual: T, message: string) {
     it(message, () => { expect(actual).toBe(expected); });

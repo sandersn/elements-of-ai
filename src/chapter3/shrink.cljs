@@ -1,6 +1,5 @@
 (ns chapter3.shrink
   (:refer chapter3.match :only [match]))
-(defn you-me-map [l] l)
 (defn wword [] (rand-nth '[when why where how]))
 (defn punt [] (rand-nth '[(please go on)
                           (tell me more)
