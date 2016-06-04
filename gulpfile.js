@@ -11,3 +11,7 @@ gulp.task("default", function () {
 gulp.task("test", ["default"], function () {
     gulp.src("out/**/test.js").pipe(jasmine())
 });
+gulp.task("shrink", ["default"], function () {
+    var shrink = require('./out/chapter3/shrink');
+    shrink.autoShrink();
+});

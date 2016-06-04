@@ -16,6 +16,5 @@ export function equal(x: any[] | number | string | boolean, y: any[] | number | 
     return false;
 }
 export function chooseRandom<T>(l: T[]): T {
-    let r = new Random()
-    return l[0];
+    return l[Math.floor(Math.random() * l.length)];
 }
