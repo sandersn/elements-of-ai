@@ -46,7 +46,7 @@ export function match5(p: any[], s: any[]): Map<any> {
         }
         else if (x.length === 2 &&
                  (x[0] === "?" ||
-                  (this && this[x[0]] && this[x[0]](s[i])))) {
+                  (this && this[x[0]] && this[x[0]](s[i], d)))) {
                 d[x[1]] = s[i];
             return true;
         }
@@ -55,7 +55,10 @@ export function match5(p: any[], s: any[]): Map<any> {
         return d;
     }
 }
-export function match(p: any[], s: any[]): Map<any> {
+export type Literal = string | number;
+export type Variable = [string, string];
+export type Pattern = (Literal | Variable)[]
+export function match(p: Pattern, s: any[]): Map<any> {
     if (!Array.isArray(p) || !Array.isArray(s)) {
         return;
     }
@@ -71,7 +74,7 @@ export function match(p: any[], s: any[]): Map<any> {
         }
         else if (x.length === 2 &&
                  (x[0] === "?" ||
-                  (this && this[x[0]] && this[x[0]](s[i + offset])))) {
+                  (this && this[x[0]] && this[x[0]](s[i + offset], d)))) {
                 d[x[1]] = s[i + offset];
             return true;
         }

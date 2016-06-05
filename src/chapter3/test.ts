@@ -2,6 +2,7 @@
 import { isAtom, match2, match3, match4, match5, match } from "./match";
 import { shrink } from "./shrink";
 import { equal, Map } from "../util";
+import { existsTree, tryRules, tryRule, rules } from "./leibniz";
 function assert<T>(expected: T, actual: T, message: string) {
     it(message, () => { expect(actual).toBe(expected); });
 }
@@ -172,8 +173,53 @@ describe("match", () => {
     basicMatchTest(match);
     basicPatternMatchTest(match);
     functionPatternMatchTest(match);
-    it("allows malformed patterns as literals", () => {
-        expect(match([1, [2], 3], [1, [2], 3])).toEqual({});
-    });
     starPatternMatchTest(match);
 });
+describe("existsTree", () => {
+    it("finds items in a flat list", () => {
+        expect(existsTree([1,2,3], 1)).toBeTruthy();
+    });
+    it("doesn't find missing items", () => {
+        expect(existsTree([1,2,3], 4)).toBeFalsy();
+    });
+    it("doesn't find missing items anywhere", () => {
+        expect(existsTree([[2,3], [4, [5], 3], 2, 2], 1)).toBeFalsy();
+    });
+    it("finds deeply nested items", () => {
+        expect(existsTree([[2,1], [4, [5], 3], 2, 2], 1)).toBeTruthy();
+    });
+    it("finds deeply nested items", () => {
+        expect(existsTree([[2,3], [4, [1], 3], 2, 2], 1)).toBeTruthy();
+    });
+    it("finds deeply nested items", () => {
+        expect(existsTree([[2,3], [4, [5], 3], 2, 1], 1)).toBeTruthy();
+    });
+});
+describe("tryRule", () => {
+    it("transforms a single rule", () => {
+        let expected: any[] = ["+",
+                               ["d", "x", "x"],
+                               ["d", "y", "x"]];
+        expect(tryRule(rules[0][0], 
+                       ["d", ["+", "x", "y"], "x"])).toEqual(expected);
+    });
+});
+describe("tryRules", () => {
+    it("doesn't transform given zero rules", () => {
+        expect(tryRules([], ["d", ["*", 2, "x"], "x"])).toBeFalsy();
+    });
+    it("transforms a single ruleset", () => {
+        let expected: any[] = ["+",
+                               ["d", ["exp", "x", 2], "x"],
+                               ["+",
+                                ["*", "x", ["d", 2, "x"]],
+                                ["*", 2, 1]]];
+        expect(tryRules(rules[0], 
+                        ["+",
+                         ["d", ["exp", "x", 2], "x"],
+                         ["+",
+                          ["*", "x", ["d", 2, "x"]],
+                          ["*", 2, ["d", "x", "x"]]]])).toEqual(expected);
+    });
+});
+       

@@ -1,5 +1,5 @@
 import { Map, chooseRandom } from "../util";
-import { match } from "./match";
+import { match, Pattern } from "./match";
 const youMe: Map<string> = {
     i: 'you',
     me: 'you',
@@ -67,9 +67,7 @@ function punt(): string {
 function mentions(word: string, s: string[]): boolean {
     return s.indexOf(word) > -1;
 }
-type Literal = string
-type Pattern = [string, string]
-const knowledge: [(Literal | Pattern)[], (d: Map<any>) => void][] = [
+const knowledge: [Pattern, (d: Map<any>) => void][] = [
     [['bye'], _ => "goodbye"],
     [['you', 'are', ['*', 'x']], d => console.log(`Please tell me ${chooseWWord()} you are ${d['x']}.`)],
     [['you', 'have', ["*", 'x']], d => console.log(`How long have you had ${d['x'].join(' ')}`)],

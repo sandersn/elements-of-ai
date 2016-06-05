@@ -97,13 +97,12 @@
       (try-rule-on-list rule expression))))
 (with-test
   (defn try-rules [rules formula]
-    (loop [rules-left rules
-           formula formula]
+    (loop [rules-left rules]
       (cond
         (empty? rules-left) nil ; no rules applied -- fail 
         :else (if-let [new-formula (try-rule (first rules-left) formula)]
                 new-formula
-                (recur (rest rules-left) formula)))))
+                (recur (rest rules-left))))))
   (is (not (try-rules '() '(d (* 2 x) x))))
   (is (= '(+ (d (exp x 2) x) (+ (* x (d 2 x)) (* 2 1)))
          (try-rules (first rules) '(+ (d (exp x 2) x) (+ (* x (d 2 x)) (* 2 (d x x))))))))
