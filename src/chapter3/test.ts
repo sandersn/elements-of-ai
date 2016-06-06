@@ -2,7 +2,7 @@
 import { isAtom, match2, match3, match4, match5, match } from "./match";
 import { shrink } from "./shrink";
 import { equal, Map } from "../util";
-import { existsTree, tryRules, tryRule, rules } from "./leibniz";
+import { existsTree, rewriteTreeSingle, tryRules, tryRule, control, rules } from "./leibniz";
 function assert<T>(expected: T, actual: T, message: string) {
     it(message, () => { expect(actual).toBe(expected); });
 }
@@ -175,6 +175,23 @@ describe("match", () => {
     functionPatternMatchTest(match);
     starPatternMatchTest(match);
 });
+describe("rewriteTreeSingle", () => {
+    it("preserves trees with no rewrites", () => {
+        const l = [1,2,3];
+        expect(rewriteTreeSingle(l, x => undefined)).toBe(undefined);
+    });
+    it("rewrites flat trees once", () => {
+        expect(rewriteTreeSingle([1,2,1], x => x === 1 ? 3 : undefined)).toEqual([3,2,1]);
+    });
+    it("rewrites trees once", () => {
+        expect(rewriteTreeSingle([[[1], ['a', 'b']],2,[1, 3, 5, 7]],
+                                 x => x === 1 ? 3 : undefined)).toEqual([[[3], ['a', 'b']],2,[1, 3, 5, 7]]);
+    });
+    it("rewrites entire subtrees", () => {
+        expect(rewriteTreeSingle([[[1], ['a', 'b']],2,[1, 3, 5, 7]],
+                                 x => Array.isArray(x) && x[0] === 'a' ? 'hunch' : undefined)).toEqual([[[1], 'hunch'],2,[1, 3, 5, 7]]);
+    });
+});
 describe("existsTree", () => {
     it("finds items in a flat list", () => {
         expect(existsTree([1,2,3], 1)).toBeTruthy();
@@ -200,13 +217,20 @@ describe("tryRule", () => {
         let expected: any[] = ["+",
                                ["d", "x", "x"],
                                ["d", "y", "x"]];
-        expect(tryRule(rules[0][0], 
-                       ["d", ["+", "x", "y"], "x"])).toEqual(expected);
+        expect(tryRule(["d", ["+", "x", "y"], "x"],
+                       rules[0][0])).toEqual(expected);
+    });
+    it("nested transforms a single rule", () => {
+        let expected: any[] = ["+", 'x', ["+",
+                                          ["d", "x", "x"],
+                                          ["d", "y", "x"]]];
+        expect(tryRule(["+", "x", ["d", ["+", "x", "y"], "x"]],
+                       rules[0][0])).toEqual(expected);
     });
 });
 describe("tryRules", () => {
     it("doesn't transform given zero rules", () => {
-        expect(tryRules([], ["d", ["*", 2, "x"], "x"])).toBeFalsy();
+        expect(tryRules(["d", ["*", 2, "x"], "x"], [])).toBeFalsy();
     });
     it("transforms a single ruleset", () => {
         let expected: any[] = ["+",
@@ -214,12 +238,44 @@ describe("tryRules", () => {
                                ["+",
                                 ["*", "x", ["d", 2, "x"]],
                                 ["*", 2, 1]]];
-        expect(tryRules(rules[0], 
-                        ["+",
+        expect(tryRules(["+",
                          ["d", ["exp", "x", 2], "x"],
                          ["+",
                           ["*", "x", ["d", 2, "x"]],
-                          ["*", 2, ["d", "x", "x"]]]])).toEqual(expected);
+                          ["*", 2, ["d", "x", "x"]]]],
+                        rules[0])).toEqual(expected);
+    });
+});
+describe("control", () => {
+    it("differentiates constants", () => {
+        expect(control(["d", 2, "x"], rules)).toBe(0);
+    });
+    it("differentiates single variables", () => {
+        expect(control(["d", 'x', "x"], rules)).toBe(1);
+    });
+    it("differentiates", () => {
+        expect(control(["d", ["*", 2, 'x'], "x"], rules)).toBe(2);
+    });
+    it("differentiates and simplifies", () => {
+        expect(control(["+", ["*", 'x', ["d", 2, 'x']], ["*", 2, 1]], rules)).toBe(2);
+    });
+    it("is idempotent", () => {
+        expect(control(control(["d", ["*", 2, 'x'], "x"], rules), rules)).toBe(2);
+    });
+    it("decrements", () => {
+        expect(control(["dec", 2], rules)).toBe(1);
+    });
+    it("differentiates exponents", () => {
+        expect(control(["d", ["+", ["exp", 'x', 2], ["*", 2, 'x']], "x"], rules)).toEqual(["+", ["*", 2, 'x'], 2]);
+    });
+    it("simplifies even unknown variables", () => {
+        expect(control(["+", ["*", 'x', 0], ["*", 2, 1]], rules)).toEqual(2);
+    });
+    it("adds constants", () => {
+        expect(control(["+", 1, 1], rules)).toEqual(2);
+    });
+    it("multiplies constants", () => {
+        expect(control(["+", 2, 2], rules)).toEqual(4);
     });
 });
        
