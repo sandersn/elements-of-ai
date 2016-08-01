@@ -1,4 +1,4 @@
-export interface Map<T> { 
+export interface Map<T> {
     [s: string]: T;
 }
 export function equal(x: any[] | number | string | boolean, y: any[] | number | string | boolean): boolean {

@@ -1,6 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
-import { addToList, isaTest, isArticle } from "./linneus";
+import { addToList, isaTest, isArticle, makeConj } from "./linneus";
 describe("addToList", () => {
     it("adds to an empty list", () => {
         const d: Map<number[]> = {};
@@ -40,5 +40,17 @@ describe("isArticle", () => {
     });
     it("says 'wat' is not an article", () => {
         expect(isArticle('wat')).toBeFalsy();
+    });
+});
+describe("makeConj", () => {
+    const basic: Map<string> = { 'dog': 'a', 'animal': 'an' };
+    it("conjoins an empty list to an empty list", () => {
+        expect(makeConj([], basic)).toEqual("");
+    });
+    it("adds articles, even to singletons", () => {
+        expect(makeConj(['dog'], basic)).toEqual("a dog");
+    });
+    it("conjoins multiple items", () => {
+        expect(makeConj(['dog', 'animal'], basic)).toEqual("a dog and an animal");
     });
 });
