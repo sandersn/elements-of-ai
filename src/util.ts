@@ -18,3 +18,11 @@ export function equal(x: any[] | number | string | boolean, y: any[] | number | 
 export function chooseRandom<T>(l: T[]): T {
     return l[Math.floor(Math.random() * l.length)];
 }
+export function findKey<T, U>(l: T[], f: (t: T) => U): U {
+    for (const x of l) {
+        const key = f(x);
+        if (key) {
+            return key;
+        }
+    }
+}

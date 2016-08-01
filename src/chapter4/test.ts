@@ -1,6 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
-import { addToList, isaTest, isArticle, makeConj } from "./linneus";
+import { addToList, isaTest, isArticle, makeConj, explainLinks, chainInterpret } from "./linneus";
 describe("addToList", () => {
     it("adds to an empty list", () => {
         const d: Map<number[]> = {};
@@ -54,3 +54,27 @@ describe("makeConj", () => {
         expect(makeConj(['dog', 'animal'], basic)).toEqual("a dog and an animal");
     });
 });
+describe("explainLinks", () => {
+    it("explains identical things", () => {
+        expect(explainLinks({}, {}, 'dog', 'dog')).toBe("They are identical");
+    });
+    it("explains given things", () => {
+        expect(explainLinks({'dog': ['animal']}, {'dog': 'a'}, 'dog', 'animal')).toBe("You told me");
+    });
+    it("explains chains", () => {
+        expect(explainLinks({'dog': ['mammal'], 'mammal': ['animal']},
+                            {'dog': 'a', 'mammal': 'a', 'animal': 'an' },
+                            'dog',
+                            'animal')).toBe("a dog is a mammal and a mammal is an animal");
+    });
+});
+describe("interpret", () => {
+    it('adds facts', () => {
+        expect(chainInterpret(["a dog is an animal"])).toEqual(
+            ['add-fact',
+             {dog: ["animal"]},
+             {animal: ["dog"]},
+             {dog: 'a', animal: 'an'}]);
+    });
+});
+
