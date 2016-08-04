@@ -25,9 +25,9 @@ export function isArticle(article: string) {
     return articles[article];
 }
 type RetVal = [string, Map<string[]>, Map<string[]>, Map<string>];
-function caseMatch(text: string[], cases: [Pattern[], (d:Map<any>) => string][]): string {
+export function caseMatch(text: string[], cases: [Pattern[], (d:Map<any>) => string][]): string {
     for (const [patterns, f] of cases) {
-        const d = findKey(patterns, p => match(p, text));
+        const d = findKey(patterns, p => match.call({ isArticle }, p, text));
         if (d) {
             return f(d);
         }
@@ -66,7 +66,7 @@ export function explainLinks(isa: Map<string[]>, article: Map<string>, x: string
         return explainChain(isa, article, x, isa[x], y);
     }
 }
-function interpret(text: string[], isa: Map<string[]>, includes: Map<string[]>, article: Map<string>): string {
+export function interpret(text: string[], isa: Map<string[]>, includes: Map<string[]>, article: Map<string>): string {
     return caseMatch(text, [
         [[[['isArticle', 'article1'], ["?", 'x'], 'is', ['isArticle', 'article2'], ["?", 'y']]],
          d => {
@@ -76,9 +76,10 @@ function interpret(text: string[], isa: Map<string[]>, includes: Map<string[]>, 
              article[d['x']] = d['article1'];
              article[d['y']] = d['article2'];
              return "add-fact";
-         }],
-        [[['what', 'is', ["?", 'x']],
-          ['what', 'is', ["isArticle", 'article1'], ["?", 'x']]],
+            }],
+        // TODO: match seems not to check max-length. so you have to order patterns from most to least restrictive
+        [[['what', 'is', ["isArticle", 'article1'], ["?", 'x']],
+          ['what', 'is', ["?", 'x']]],
          d => {
              const y = isa[d['x']] || includes[d['x']];
              const flag = isa[d['x']] ? 'isa' : includes[d['x']] ? 'includes' : 'dunno';
@@ -86,7 +87,7 @@ function interpret(text: string[], isa: Map<string[]>, includes: Map<string[]>, 
                  console.log("I don't know.");
              }
              else {
-                 const verb = flag === 'isa' ? 'is' : 'is something more general than';
+                 const verb = flag === 'isa' ? 'includes' : 'is something more general than';
                  console.log(article[d['x']], d['x'], verb, makeConj(y, article));
              }
              return flag;
@@ -123,7 +124,7 @@ export function chainInterpret(utterances: string[]) {
     const includes: Map<string[]> = {};
     const article: Map<string> = {};
     let state = 'start';
-    for (const utterance in utterances) {
+    for (const utterance of utterances) {
         // TODO: Should be a reduce
         state = interpret(utterance.split(' '), isa, includes, article);
     }
