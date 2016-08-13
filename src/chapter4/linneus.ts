@@ -1,3 +1,4 @@
+/// <reference path="../../typings/node.d.ts" />
 import { match, Pattern } from "../chapter3/match";
 import { Map, findKey } from "../util";
 export function addToList<T>(k: string, v: T, d: Map<T[]>) {
@@ -87,7 +88,7 @@ export function interpret(text: string[], isa: Map<string[]>, includes: Map<stri
                  console.log("I don't know.");
              }
              else {
-                 const verb = flag === 'isa' ? 'includes' : 'is something more general than';
+                 const verb = flag === 'isa' ? 'is' : 'is something more general than';
                  console.log(article[d['x']], d['x'], verb, makeConj(y, article));
              }
              return flag;
@@ -95,7 +96,7 @@ export function interpret(text: string[], isa: Map<string[]>, includes: Map<stri
         [[['is', ['isArticle', 'article1'], ["?", 'x'], ['isArticle', 'article2'], ["?", 'y']]],
          d => {
              if (isaTest(isa, d['x'], d['y'], 10)) {
-                 console.log("Yes indeed", article['x'], d['x'], 'is', article['y'], d['y']);
+                 console.log("Yes indeed", article[d['x']], d['x'], 'is', article[d['y']], d['y']);
                  return 'is-indeed';
              }
              else {
@@ -130,18 +131,21 @@ export function chainInterpret(utterances: string[]) {
     }
     return [state, isa, includes, article];
 }
+import * as readline from 'readline';
 export function linneus() {
-    // TODO: I have no idea how to read from console in node!
-    let readLine: () => string;
+    const rl = readline.createInterface(process.stdin, process.stdout, undefined, /*terminal*/ true);
     console.log("This is Linneus. Please talk to me.");
     const isa: Map<string[]> = {};
     const includes: Map<string[]> = {};
     const article: Map<string> = {};
-    while(true) {
-        console.log("-->");
-        if (interpret(readLine().split(' '), isa, includes, article) === 'bye') {
-            console.log("Goodbye");
-            return;
-        }
-    }
+    (function rec() {
+        rl.question("-->", answer => {
+            if(interpret(answer.split(' '), isa, includes, article) === 'bye') {
+                console.log("Goodbye");
+            }
+            else {
+                rec();
+            }
+        });
+    })();
 }

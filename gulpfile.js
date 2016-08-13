@@ -15,3 +15,7 @@ gulp.task("shrink", ["default"], function () {
     var shrink = require('./out/chapter3/shrink');
     shrink.autoShrink();
 });
+gulp.task("linneus", ["default"], function () {
+    var linneus = require('./out/chapter4/linneus');
+    linneus.linneus();
+});
