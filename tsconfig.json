@@ -10,6 +10,8 @@
         "src/chapter3/shrink.ts",
         "src/chapter3/leibniz.ts",
         "src/chapter4/linneus.ts",
-        "src/chapter4/test.ts"
+        "src/chapter4/test.ts",
+        "src/chapter5/painted-squares.ts",
+        "src/chapter5/test.ts"
     ]
 }
