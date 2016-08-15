@@ -29,3 +29,24 @@ export function matchNorth(trial: Piece, state: State) {
 export function matchWest(trial: Piece, state: State) {
     return trial[Orientation.W] === orient(state[0])[Orientation.E];
 }
+/**
+ * I added some comments specific to the 2x2 puzzle although this works for any size puzzle
+ * (orient takes care of retrieving the correct puzzle to match)
+ */
+export function sidesOk(placement: Placement, currentState: State) {
+    const trial = orient(placement);
+    const len = currentState.length;
+    if (len === 0) { // first piece
+        return true; // no match required
+    }
+    else if (len % boxWidth === 0) { // third piece
+        return matchNorth(trial, currentState); // match up to first piece
+    }
+    else if (len < boxWidth) { // second piece
+        return matchWest(trial, currentState); // match left to first piece
+    }
+    else { // fourth piece
+        // match up to second piece, left to third piece
+        return matchNorth(trial, currentState) && matchWest(trial, currentState);
+    }
+}

@@ -1,6 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
-import { rotateList, orient, matchNorth, matchWest, Pattern, Orientation } from "./painted-squares";
+import { rotateList, orient, matchNorth, matchWest, sidesOk, Pattern, Orientation } from "./painted-squares";
 describe("rotateList", () => {
     const l = [1, 2, 3];
     it("no-ops 0", () => {
@@ -75,5 +75,37 @@ describe("matchWest", () => {
     it("matches a correct piece", () => {
         expect(matchWest([Pattern.None, Pattern.None, Pattern.None, Pattern.HA],
                          [['p1', Orientation.S]])).toBeTruthy();
+    });
+});
+describe("sidesOk", () => {
+    it("places the first unrotated piece", () => {
+        expect(sidesOk(['p1', Orientation.S], [])).toBeTruthy();
+    });
+    it("places the first rotated piece", () => {
+        expect(sidesOk(['p2', Orientation.E], [])).toBeTruthy();
+    });
+    it("places the third unrotated piece", () => {
+        expect(sidesOk(['p1', Orientation.S], [
+            ['--', Orientation.S],
+            ['p3', Orientation.E]])).toBeTruthy();
+    });
+    it("places the third unrotated piece (2)", () => {
+        expect(sidesOk(['p1', Orientation.S], [
+            ['--', Orientation.S],
+            ['p4', Orientation.S]])).toBeTruthy();
+    });
+    it("places the second unrotated piece", () => {
+        expect(sidesOk(['p1', Orientation.S], [
+            ['p3', Orientation.E]])).toBeTruthy();
+    });
+    it("places the second unrotated piece (2)", () => {
+        expect(sidesOk(['p1', Orientation.S], [
+            ['p2', Orientation.S]])).toBeTruthy();
+    });
+    it("places the fourth unrotated piece", () => {
+        expect(sidesOk(['p1', Orientation.S], [
+            ['p2', Orientation.S],
+            ['p4', Orientation.S],
+            ['--', Orientation.S]])).toBeTruthy();
     });
 });
