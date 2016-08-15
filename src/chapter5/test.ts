@@ -1,6 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
-import { rotateList, orient, matchNorth, Pattern, Orientation } from "./painted-squares";
+import { rotateList, orient, matchNorth, matchWest, Pattern, Orientation } from "./painted-squares";
 describe("rotateList", () => {
     const l = [1, 2, 3];
     it("no-ops 0", () => {
@@ -45,5 +45,35 @@ describe("matchNorth", () => {
         expect(matchNorth([Pattern.None, Pattern.None, Pattern.ST, Pattern.None],
                           [['--', Orientation.N],
                            ['p1', Orientation.N]])).toBeFalsy();
+    });
+});
+describe("matchWest", () => {
+    const allstripe = [Pattern.ST, Pattern.ST, Pattern.ST, Pattern.ST];
+    const allhash = [Pattern.HA, Pattern.HA, Pattern.HA, Pattern.HA];
+    it("matches piece rotated once", () => {
+        expect(matchWest(allstripe,
+                          [['p1', Orientation.E]])).toBeTruthy();
+    });
+    it("matches piece unrotated", () => {
+        expect(matchWest(allhash,
+                          [['p1', Orientation.S]])).toBeTruthy();
+    });
+    it("doesn't match incorrect pattern (last piece)", () => {
+        expect(matchWest(allstripe,
+                         [['p1', Orientation.S],
+                          ['--', Orientation.N],
+                          ['--', Orientation.N]])).toBeFalsy();
+    });
+    it("doesn't match incorrect pattern (second piece)", () => {
+        expect(matchWest(allhash,
+                         [['p1', Orientation.E]])).toBeFalsy();
+    });
+    it("matches a correct piece", () => {
+        expect(matchWest([Pattern.None, Pattern.None, Pattern.None, Pattern.ST],
+                         [['p1', Orientation.E]])).toBeTruthy();
+    });
+    it("matches a correct piece", () => {
+        expect(matchWest([Pattern.None, Pattern.None, Pattern.None, Pattern.HA],
+                         [['p1', Orientation.S]])).toBeTruthy();
     });
 });

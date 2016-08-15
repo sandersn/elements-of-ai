@@ -26,3 +26,6 @@ export function orient([piece, orientation]: Placement): Piece {
 export function matchNorth(trial: Piece, state: State) {
     return trial[Orientation.N] === orient(state[boxWidth - 1])[Orientation.S];
 }
+export function matchWest(trial: Piece, state: State) {
+    return trial[Orientation.W] === orient(state[0])[Orientation.E];
+}
