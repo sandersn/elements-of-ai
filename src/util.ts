@@ -35,3 +35,12 @@ export function concatMap<T,U>(l: T[], f: (t: T) => U[]): U[] {
     }
     return result;
 }
+export function cross<T,U>(ts:T[], us: U[]): [T, U][] {
+    const pairs: [T, U][] = [];
+    for (const t of ts) {
+        for (const u of us) {
+            pairs.push([t, u]);
+        }
+    }
+    return pairs;
+}
