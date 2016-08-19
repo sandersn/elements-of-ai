@@ -50,10 +50,6 @@ export function sidesOk(placement: Placement, currentState: State) {
         return matchNorth(trial, currentState) && matchWest(trial, currentState);
     }
 }
-export function show(count: number, solution: State) {
-    const s = solution.map(([name, dir]) => `${name}: ${Orientation[dir]}`).join(', ')
-    return `Solution ${count}: {${solution}}`;
-}
 export function solveSquares(state: State, unusedPieces: PieceName[]): State[] {
     if (unusedPieces.length === 0) {
         return [state];
@@ -72,4 +68,11 @@ export function holdouts<T>(l: T[]): [T, T[]][] {
 }
 export function solve() {
     return solveSquares([], Object.keys(pattern));
+}
+export function show(solution: State, count: number) {
+    const s = solution.map(([name, dir]) => `${name}: ${Orientation[dir]}`).join(', ')
+    console.log(`Solution ${count}: {${solution}}`);
+}
+export function showSolution() {
+    solveSquares([], Object.keys(pattern)).forEach(show);
 }

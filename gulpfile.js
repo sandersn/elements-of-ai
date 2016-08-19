@@ -19,3 +19,7 @@ gulp.task("linneus", ["default"], function () {
     var linneus = require('./out/chapter4/linneus');
     linneus.linneus();
 });
+gulp.task("painted-squares", ["default"], function () {
+    var paintedSquares = require('./out/chapter5/painted-squares');
+    paintedSquares.showSolution();
+});
