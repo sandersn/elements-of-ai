@@ -26,3 +26,12 @@ export function findKey<T, U>(l: T[], f: (t: T) => U): U {
         }
     }
 }
+export function concatMap<T,U>(l: T[], f: (t: T) => U[]): U[] {
+    const result: U[] = [];
+    for (const x of l) {
+        for (const ret of f(x)) {
+            result.push(ret);
+        }
+    }
+    return result;
+}

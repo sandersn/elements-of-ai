@@ -1,6 +1,6 @@
 
 import { match } from "../chapter3/match";
-import { Map, findKey } from "../util";
+import { Map, findKey, concatMap } from "../util";
 export enum Pattern { None, ST, HA, GR, BX };
 type Piece = Pattern[];
 type PieceName = string;
@@ -20,8 +20,8 @@ export function rotateList<T>(l: T[], n: number) {
     const offset = l.length - n;
     return l.slice(offset).concat(l.slice(0, offset));
 }
-export function orient([piece, orientation]: Placement): Piece {
-    return rotateList(pattern[piece], orientation);
+export function orient([pieceName, orientation]: Placement): Piece {
+    return rotateList(pattern[pieceName], orientation);
 }
 export function matchNorth(trial: Piece, state: State) {
     return trial[Orientation.N] === orient(state[boxWidth - 1])[Orientation.S];
@@ -49,4 +49,39 @@ export function sidesOk(placement: Placement, currentState: State) {
         // match up to second piece, left to third piece
         return matchNorth(trial, currentState) && matchWest(trial, currentState);
     }
+}
+export function show(count: number, solution: State) {
+    const s = solution.map(([name, dir]) => `${name}: ${Orientation[dir]}`).join(', ')
+    return `Solution ${count}: {${solution}}`;
+}
+export function solveSquares(state: State, unusedPieces: PieceName[]): State[] {
+    if (unusedPieces.length === 0) {
+        return [state];
+    }
+    else {
+        return concatMap(holdouts(unusedPieces),
+                         ([piece, rest]) => tryPiece(piece, state, rest));
+    }
+}
+export function tryPiece(piece: PieceName, state: State, rest: PieceName[]) {
+    return concatMap([0,1,2,3],
+                     dir => tryOrientation(dir, piece, state, rest));
+}
+export function tryOrientation(dir: Orientation, piece: PieceName, state: State, rest: PieceName[]) {
+    const placement: Placement = [piece, dir];
+    if (sidesOk(placement, state)) {
+        return solveSquares([placement].concat(state), rest);
+    }
+    else {
+        return [];
+    }
+}
+export function holdouts<T>(l: T[]): [T, T[]][] {
+    function inner(x: T, i: number): [T, T[]] {
+        return [x, l.slice(0, i).concat(l.slice(i+1))];
+    }
+    return l.map(inner);
+}
+export function solve() {
+    return solveSquares([], Object.keys(pattern));
 }

@@ -1,6 +1,6 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
-import { rotateList, orient, matchNorth, matchWest, sidesOk, Pattern, Orientation } from "./painted-squares";
+import { rotateList, orient, matchNorth, matchWest, sidesOk, solveSquares, solve, Pattern, Orientation } from "./painted-squares";
 describe("rotateList", () => {
     const l = [1, 2, 3];
     it("no-ops 0", () => {
@@ -107,5 +107,34 @@ describe("sidesOk", () => {
             ['p2', Orientation.S],
             ['p4', Orientation.S],
             ['--', Orientation.S]])).toBeTruthy();
+    });
+});
+describe("solves", () => {
+    it("works", () => {
+        expect(solve()).toEqual(
+            [   [ [ 'p4', 3 ], [ 'p3', 2 ], [ 'p2', 1 ], [ 'p1', 0 ] ]
+              , [ [ 'p4', 0 ], [ 'p2', 1 ], [ 'p3', 3 ], [ 'p1', 1 ] ]
+              , [ [ 'p4', 0 ], [ 'p3', 3 ], [ 'p2', 2 ], [ 'p1', 2 ] ]
+              , [ [ 'p3', 1 ], [ 'p4', 2 ], [ 'p2', 2 ], [ 'p1', 2 ] ]
+              , [ [ 'p2', 0 ], [ 'p4', 2 ], [ 'p3', 3 ], [ 'p1', 2 ] ]
+              , [ [ 'p3', 3 ], [ 'p2', 0 ], [ 'p4', 3 ], [ 'p1', 3 ] ]
+              , [ [ 'p3', 2 ], [ 'p4', 3 ], [ 'p1', 0 ], [ 'p2', 0 ] ]
+              , [ [ 'p3', 3 ], [ 'p1', 1 ], [ 'p4', 0 ], [ 'p2', 2 ] ]
+              , [ [ 'p1', 0 ], [ 'p3', 1 ], [ 'p4', 0 ], [ 'p2', 2 ] ]
+              , [ [ 'p4', 2 ], [ 'p3', 2 ], [ 'p1', 2 ], [ 'p2', 3 ] ]
+              , [ [ 'p4', 3 ], [ 'p1', 3 ], [ 'p3', 2 ], [ 'p2', 3 ] ]
+              , [ [ 'p3', 0 ], [ 'p1', 3 ], [ 'p4', 1 ], [ 'p2', 3 ] ]
+              , [ [ 'p4', 3 ], [ 'p1', 3 ], [ 'p2', 1 ], [ 'p3', 0 ] ]
+              , [ [ 'p2', 2 ], [ 'p1', 2 ], [ 'p4', 1 ], [ 'p3', 0 ] ]
+              , [ [ 'p2', 0 ], [ 'p4', 2 ], [ 'p1', 3 ], [ 'p3', 1 ] ]
+              , [ [ 'p1', 1 ], [ 'p4', 1 ], [ 'p2', 2 ], [ 'p3', 1 ] ]
+              , [ [ 'p2', 1 ], [ 'p4', 3 ], [ 'p1', 1 ], [ 'p3', 2 ] ]
+              , [ [ 'p1', 0 ], [ 'p2', 0 ], [ 'p4', 0 ], [ 'p3', 3 ] ]
+              , [ [ 'p2', 1 ], [ 'p1', 0 ], [ 'p3', 0 ], [ 'p4', 0 ] ]
+              , [ [ 'p3', 2 ], [ 'p2', 3 ], [ 'p1', 1 ], [ 'p4', 1 ] ]
+              , [ [ 'p2', 1 ], [ 'p3', 0 ], [ 'p1', 1 ], [ 'p4', 1 ] ]
+              , [ [ 'p1', 2 ], [ 'p2', 3 ], [ 'p3', 0 ], [ 'p4', 1 ] ]
+              , [ [ 'p1', 3 ], [ 'p3', 1 ], [ 'p2', 3 ], [ 'p4', 2 ] ]
+              , [ [ 'p1', 0 ], [ 'p2', 0 ], [ 'p3', 1 ], [ 'p4', 2 ] ] ]);
     });
 });
