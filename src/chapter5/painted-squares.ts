@@ -1,6 +1,6 @@
 
 import { match } from "../chapter3/match";
-import { Map, findKey, concatMap, cross } from "../util";
+import { Map, findKey, concatMap, cross, zipWith } from "../util";
 export enum Pattern { None, ST, HA, GR, BX };
 type Piece = Pattern[];
 type PieceName = string;
@@ -59,19 +59,40 @@ export function solveSquares(state: State, unusedPieces: PieceName[]): State[] {
                          ([[piece, rest], dir]) => tryOrientation(dir, piece, state, rest));
     }
 }
-export function tryOrientation(dir: Orientation, piece: PieceName, state: State, rest: PieceName[]) {
+function tryOrientation(dir: Orientation, piece: PieceName, state: State, rest: PieceName[]) {
     const placement: Placement = [piece, dir];
     return sidesOk(placement, state) ? solveSquares([placement].concat(state), rest) : [];
 }
-export function holdouts<T>(l: T[]): [T, T[]][] {
+function holdouts<T>(l: T[]): [T, T[]][] {
     return l.map((x, i) => [x, l.slice(0, i).concat(l.slice(i+1))] as [T, T[]]);
 }
 export function solve() {
     return solveSquares([], Object.keys(pattern));
 }
-export function show(solution: State, count: number) {
+function formatSide(pattern: Pattern) {
+    return ["|", '@', 'x', '#'][pattern];
+}
+function formatPiece(piece: Piece): [string, string, string] {
+    const patterns = piece.map(formatSide);
+    return [' ' + patterns[2] + ' '
+            , patterns[3] + ' ' + patterns[1]
+            , ' ' + patterns[0] + ' '];
+}
+function formatState(state: State): string {
+    // 1. reverse and orient.
+    state.reverse();
+    let thing = state.map(orient).map(formatPiece).reverse();
+    // 2. formatpiece
+    // 3. place individual pieces
+    return formatSideBySide(thing[0], thing[1])
+        + '\n' + formatSideBySide(thing[2], thing[3]);
+}
+function formatSideBySide(piece1: string[], piece2: string[]): string {
+    return zipWith(piece1, piece2, (s1, s2) => s1 + s2).join('\n');
+}
+function show(solution: State, count: number) {
     const s = solution.map(([name, dir]) => `${name}: ${Orientation[dir]}`).join(', ')
-    console.log(`Solution ${count}: {${solution}}`);
+    console.log(`Solution ${count}: {${formatState(solution)}}`);
 }
 export function showSolution() {
     solveSquares([], Object.keys(pattern)).forEach(show);

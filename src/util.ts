@@ -44,3 +44,6 @@ export function cross<T,U>(ts:T[], us: U[]): [T, U][] {
     }
     return pairs;
 }
+export function zipWith<T,U,V>(ts: T[], us: U[], f: (t: T, u: U) => V): V[] {
+    return ts.map((t, i) => f(t, us[i]));
+}
