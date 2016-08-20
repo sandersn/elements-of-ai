@@ -1,7 +1,7 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
 import { rotateList, orient, matchNorth, matchWest, sidesOk, solveSquares, solve, Pattern, Orientation } from "./painted-squares";
-import { france, depthFirstSearch } from "./search";
+import { france, depthFirstSearch, breadthFirstSearch } from "./search";
 describe("rotateList", () => {
     const l = [1, 2, 3];
     it("no-ops 0", () => {
@@ -142,6 +142,13 @@ describe("solves", () => {
 
 describe("depthFirstSearch", () => {
     it("works on France", () => {
-        expect(depthFirstSearch(france, 'rennes', 'avignon')).toEqual(['rennes', 'paris', 'dijon', 'lyon', 'grenoble', 'avignon']);
+        expect(depthFirstSearch(france, 'rennes', 'avignon')).toEqual(
+            ['rennes', 'caen', 'calais', 'nancy', 'strasbourg', 'dijon', 'lyon', 'grenoble', 'avignon']);
+    });
+});
+describe("breadthFirstSearch", () => {
+    it("works on France", () => {
+        expect(breadthFirstSearch(france, 'rennes', 'avignon')).toEqual(
+            ['rennes', 'paris', 'dijon', 'lyon', 'avignon']);
     });
 });

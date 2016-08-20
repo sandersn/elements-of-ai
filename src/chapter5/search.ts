@@ -34,8 +34,35 @@ export function depthFirstSearch(graph: Map<string[]>, start: string, goal: stri
         if (n === goal) {
             return extractPath(pointers, n);
         }
-        l = setDifference(graph[n as string], closed);
-        open = l.concat(setDifference(open, l));
+        // reversed to match book's Lisp implementation;
+        // it's not actually required
+        l = setDifference(graph[n as string], closed).reverse();
+        open = setDifference(open, l).concat(l);
+        for (const x of l) {
+            pointers[x] = n;
+        }
+    }
+    return null;
+}
+export function breadthFirstSearch(graph: Map<string[]>, start: string, goal: string): string[] {
+    let open = [start];
+    let pointers: Map<string> = {};
+    let closed: string[] = [];
+    let n: string;
+    let l: string[];
+    let openCount = 0;
+    pointers[start] = null;
+    while (open.length) {
+        n = open.pop();
+        openCount++;
+        closed.push(n);
+        if (n === goal) {
+            return extractPath(pointers, n);
+        }
+        // reversed to match book's Lisp implementation;
+        // it's not actually required
+        l = setDifference(setDifference(graph[n as string], open), closed).reverse();
+        open = l.concat(open);
         for (const x of l) {
             pointers[x] = n;
         }
