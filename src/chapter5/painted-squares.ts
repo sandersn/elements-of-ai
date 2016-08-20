@@ -70,7 +70,8 @@ export function solve() {
     return solveSquares([], Object.keys(pattern));
 }
 function formatSide(pattern: Pattern) {
-    return ["|", '@', 'x', '#'][pattern];
+//export enum Pattern { None, ST, HA, GR, BX };
+    return ['_', "|", '#', 'x', '@'][pattern];
 }
 function formatPiece(piece: Piece): [string, string, string] {
     const patterns = piece.map(formatSide);
@@ -79,20 +80,16 @@ function formatPiece(piece: Piece): [string, string, string] {
             , ' ' + patterns[0] + ' '];
 }
 function formatState(state: State): string {
-    // 1. reverse and orient.
-    state.reverse();
-    let thing = state.map(orient).map(formatPiece).reverse();
-    // 2. formatpiece
-    // 3. place individual pieces
-    return formatSideBySide(thing[0], thing[1])
-        + '\n' + formatSideBySide(thing[2], thing[3]);
+    let pieces = state.map(orient).map(formatPiece).reverse();
+    return formatSideBySide(pieces[0], pieces[1])
+        + '\n' + formatSideBySide(pieces[2], pieces[3]);
 }
 function formatSideBySide(piece1: string[], piece2: string[]): string {
     return zipWith(piece1, piece2, (s1, s2) => s1 + s2).join('\n');
 }
 function show(solution: State, count: number) {
     const s = solution.map(([name, dir]) => `${name}: ${Orientation[dir]}`).join(', ')
-    console.log(`Solution ${count}: {${formatState(solution)}}`);
+    console.log(`Solution ${count}:\n${formatState(solution)}`);
 }
 export function showSolution() {
     solveSquares([], Object.keys(pattern)).forEach(show);
