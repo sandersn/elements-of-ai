@@ -12,6 +12,7 @@
         "src/chapter4/linneus.ts",
         "src/chapter4/test.ts",
         "src/chapter5/painted-squares.ts",
+        "src/chapter5/search.ts",
         "src/chapter5/test.ts"
     ]
 }
