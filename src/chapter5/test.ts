@@ -149,7 +149,7 @@ describe("depthFirstSearch", () => {
 describe("breadthFirstSearch", () => {
     it("works on France", () => {
         expect(breadthFirstSearch(france, 'rennes', 'avignon')).toEqual(
-            ['rennes', 'paris', 'dijon', 'lyon', 'avignon']);
+            [['rennes', 'paris', 'dijon', 'lyon', 'avignon'], 15]);
     });
 });
 describe("bestFirstSearch", () => {
@@ -158,6 +158,6 @@ describe("bestFirstSearch", () => {
                                n => longitudeDifference(n, 'avignon'),
                                'rennes',
                                'avignon')).toEqual(
-                                   ['rennes', 'paris', 'dijon', 'lyon', 'avignon']);
+                                   [['rennes', 'paris', 'dijon', 'lyon', 'avignon'], 12]);
     });
 });
