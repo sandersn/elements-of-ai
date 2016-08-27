@@ -47,7 +47,7 @@ export const franceDistance: Map<[string,number][]> = {
     nancy: [['strasbourg', 145], ['dijon', 201], ['paris', 372], ['calais', 534]],
     strasbourg: [['dijon', 335], ['nancy', 145]],
     dijon: [['strasbourg', 335], ['lyon', 192], ['paris', 313], ['nancy', 201]],
-    lyon: [['grenoble', 104], ['avignon', 216], ['limoges', 392], ['dijon', 192]],
+    lyon: [['grenoble', 104], ['avignon', 216], ['limoges', 389], ['dijon', 192]],
     grenoble: [['avignon', 227], ['lyon', 104]],
     avignon: [['grenoble', 227], ['marseille', 99], ['montpellier', 121], ['lyon', 216]],
     marseille: [['nice', 188], ['avignon', 99]],
@@ -57,7 +57,7 @@ export const franceDistance: Map<[string,number][]> = {
     bordeaux: [['limoges', 220], ['toulouse', 253], ['nantes', 329]],
     limoges: [['lyon', 389], ['toulouse', 313], ['bordeaux', 220], ['nantes', 329], ['paris', 396]],
     nantes: [['limoges', 329], ['bordeaux', 329], ['rennes', 107]],
-    paris: [['calais', 297], ['nancy', 372], ['dijon', 313], ['limoges', 396], ['rennes', 348], ['caen', 2410]]
+    paris: [['calais', 297], ['nancy', 372], ['dijon', 313], ['limoges', 396], ['rennes', 348], ['caen', 241]]
 }
 export function depthFirstSearch(graph: Map<string[]>, start: string, goal: string): string[] {
     let open = [start];
