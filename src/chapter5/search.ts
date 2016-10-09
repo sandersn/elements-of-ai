@@ -47,17 +47,17 @@ export const franceDistance: Map<[string,number][]> = {
     nancy: [['strasbourg', 145], ['dijon', 201], ['paris', 372], ['calais', 534]],
     strasbourg: [['dijon', 335], ['nancy', 145]],
     dijon: [['strasbourg', 335], ['lyon', 192], ['paris', 313], ['nancy', 201]],
-    lyon: [['grenoble', 104], ['avignon', 216], ['limoges', 392], ['dijon', 192]],
+    lyon: [['grenoble', 104], ['avignon', 216], ['limoges', 389], ['dijon', 192]],
     grenoble: [['avignon', 227], ['lyon', 104]],
     avignon: [['grenoble', 227], ['marseille', 99], ['montpellier', 121], ['lyon', 216]],
     marseille: [['nice', 188], ['avignon', 99]],
     nice: [['marseille', 188]],
     montpellier: [['avignon', 121], ['toulouse', 240]],
     toulouse: [['montpellier', 240], ['bordeaux', 253], ['limoges', 313]],
-    bordeaux: [['limoges', 220], ['toulouse', 253], ['nantes', 329]],
+    bordeaux: [['limoges', 220], ['toulouse', 253], ['nantes', 330]],
     limoges: [['lyon', 389], ['toulouse', 313], ['bordeaux', 220], ['nantes', 329], ['paris', 396]],
-    nantes: [['limoges', 329], ['bordeaux', 329], ['rennes', 107]],
-    paris: [['calais', 297], ['nancy', 372], ['dijon', 313], ['limoges', 396], ['rennes', 348], ['caen', 2410]]
+    nantes: [['limoges', 329], ['bordeaux', 330], ['rennes', 107]],
+    paris: [['calais', 297], ['nancy', 372], ['dijon', 313], ['limoges', 396], ['rennes', 348], ['caen', 241]]
 }
 export function depthFirstSearch(graph: Map<string[]>, start: string, goal: string): string[] {
     let open = [start];
@@ -140,6 +140,73 @@ export function bestFirstSearch(graph: Map<string[]>, f: (s: string) => number, 
     }
     return null;
 }
+type Distance = number & { _brand1: any };
+export type Intercity = number & { _brand2: any };
+export function uniformCost(graph: Map<[string, Intercity][]>, start: string, goal: string): [string[], number] {
+    const pointers: Map<string> = {};
+    const values: Map<Distance> = {};
+    let open: [string, Intercity][] = [[start, 0 as Intercity]];
+    const closed: [string, Intercity][] = [];
+    pointers[start] = null;
+    values[start] = 0 as Distance;
+    let openCount = 1;
+    while (open.length) {
+        const [n, dst] = open.pop();
+        closed.push([n, dst]);
+        if (n === goal) {
+            console.log(openCount);
+            return [extractPath(pointers, n), openCount];
+        }
+        const l = graph[n];
+        for (const remaining of setDifferenceFirst(l, closed.map(fst))) {
+            const [m, dst2] = remaining;
+            const temp: Distance = (values[n] as number + (dst2 as number)) as Distance;
+            if (open.map(fst).indexOf(m) > -1) {
+                if (temp < values[m]) {
+                    values[m] = temp;
+                    pointers[m] = n;
+                    openCount++;
+                }
+            }
+            else {
+                values[m] = temp;
+                pointers[m] = n;
+                open.push([m, dst2]);
+                openCount++;
+            }
+        }
+        open.sort((s1,s2) => values[fst(s1)] === values[fst(s2)] ? 0
+                           : values[fst(s1)] < values[fst(s2)] ? 1
+                           : -1);
+    }
+    return null;
+}
+function fst<T,U>([x,y]: [T, U]): T {
+    return x;
+}
+function snd<T,U>([x,y]: [T, U]): U {
+    return y;
+}
+function arcDist(n2: string, l: [string, number][]): number {
+    return cdrSelect(n2, l);
+}
+function cdrSelect(key: string, l: [string, number][]): number {
+    for (const [s, n] of l) {
+        if (key === s) {
+            return n;
+        }
+    }
+    return Number.MAX_VALUE;
+}
+function setDifferenceFirst<T,U>(ts: [T,U][], minus: T[]): [T,U][] {
+    const result: [T,U][] = [];
+    for (const [t,u] of ts) {
+        if (minus.indexOf(t) === -1) {
+            result.push([t,u]);
+        }
+    }
+    return result;
+}
 function setDifference<T>(ts: T[], minus: T[]): T[] {
     const result: T[] = [];
     for (const t of ts) {
@@ -164,6 +231,7 @@ export function longitudeDifference(n1: string, n2: string): number {
 function extractPath(pointers: Map<string>, p: string): string[] {
     const path: string[] = [];
     while(p !== null) {
+        console.log(p)
         path.push(p);
         p = pointers[p];
     }
