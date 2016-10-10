@@ -145,23 +145,22 @@ export type Intercity = number & { _brand2: any };
 export function uniformCost(graph: Map<[string, Intercity][]>, start: string, goal: string): [string[], number] {
     const pointers: Map<string> = {};
     const values: Map<Distance> = {};
-    let open: [string, Intercity][] = [[start, 0 as Intercity]];
-    const closed: [string, Intercity][] = [];
+    let open: string[] = [start];
+    const closed: string[] = [];
     pointers[start] = null;
     values[start] = 0 as Distance;
     let openCount = 1;
     while (open.length) {
-        const [n, dst] = open.pop();
-        closed.push([n, dst]);
+        const n = open.pop();
+        closed.push(n);
         if (n === goal) {
-            console.log(openCount);
             return [extractPath(pointers, n), openCount];
         }
         const l = graph[n];
-        for (const remaining of setDifferenceFirst(l, closed.map(fst))) {
-            const [m, dst2] = remaining;
-            const temp: Distance = (values[n] as number + (dst2 as number)) as Distance;
-            if (open.map(fst).indexOf(m) > -1) {
+        for (const remaining of setDifferenceFirst(l, closed)) {
+            const [m, dst] = remaining;
+            const temp: Distance = (values[n] as number + (dst as number)) as Distance;
+            if (open.indexOf(m) > -1) {
                 if (temp < values[m]) {
                     values[m] = temp;
                     pointers[m] = n;
@@ -171,12 +170,12 @@ export function uniformCost(graph: Map<[string, Intercity][]>, start: string, go
             else {
                 values[m] = temp;
                 pointers[m] = n;
-                open.push([m, dst2]);
+                open.push(m);
                 openCount++;
             }
         }
-        open.sort((s1,s2) => values[fst(s1)] === values[fst(s2)] ? 0
-                           : values[fst(s1)] < values[fst(s2)] ? 1
+        open.sort((s1,s2) => values[s1] === values[s2] ? 0
+                           : values[s1] < values[s2] ? 1
                            : -1);
     }
     return null;
