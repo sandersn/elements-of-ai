@@ -21,7 +21,7 @@ export function match3(p: any[], s: any[]): boolean {
     if (p.length !== s.length) return false;
     return p.every((x,i) => x === "?" || equal(x, s[i]));
 }
-export function match4(p: any[], s: any[]): Map<any> {
+export function match4(p: any[], s: any[]): Map<any> | undefined {
     if (p.length !== s.length) return;
     let d: Map<any> = {};
     if (p.every(matchHelper)) {
@@ -35,12 +35,13 @@ export function match4(p: any[], s: any[]): Map<any> {
             d[x[1]] = s[i];
             return true;
         }
+        return false;
     }
 }
-export function match5(p: any[], s: any[]): Map<any> {
+export function match5(this: any, p: any[], s: any[]): Map<any> | undefined {
     if (p.length !== s.length) return;
     const d: Map<any> = {};
-    const matchHelper = (x: any, i: number) => {
+    const matchHelper = (x: any[], i: number) => {
         if (equal(x, s[i])) {
             return true;
         }
@@ -50,6 +51,7 @@ export function match5(p: any[], s: any[]): Map<any> {
                 d[x[1]] = s[i];
             return true;
         }
+        return false;
     }
     if (p.every(matchHelper)) {
         return d;
@@ -58,7 +60,10 @@ export function match5(p: any[], s: any[]): Map<any> {
 export type Literal = string | number;
 export type Variable = [string, string];
 export type Pattern = (Literal | Variable)[]
-export function match(p: Pattern, s: any[]): Map<any> {
+function isLiteral(x: any): x is Variable {
+    return Array.isArray(x) && x.length === 2 && typeof x[0] === "string" && typeof x[1] === "string";
+}
+export function match(this: Map<(v: any, d:Map<any>) => boolean> | void, p: Pattern, s: any[]): Map<any> | undefined {
     if (!Array.isArray(p) || !Array.isArray(s)) {
         return;
     }
@@ -68,18 +73,18 @@ export function match(p: Pattern, s: any[]): Map<any> {
 
     const d: Map<any> = {};
     let offset: number = 0;
-    const matchHelper = (x: any, i: number) => {
+    const matchHelper = (x: Literal | Variable, i: number) => {
         if (equal(x, s[i + offset])) {
             return true;
         }
-        else if (x.length === 2 &&
-                 (x[0] === "?" ||
-                  (this && this[x[0]] && this[x[0]](s[i + offset], d)))) {
-                d[x[1]] = s[i + offset];
+        if (!isLiteral(x)) {
+            return false;
+        }
+        if (x[0] === "?" || (this && this[x[0]] && this[x[0]](s[i + offset], d))) {
+            d[x[1]] = s[i + offset];
             return true;
         }
-        else if (x.length === 2 &&
-                 x[0] === "*") {
+        else if (x[0] === "*") {
             if (i + 1 === p.length) {
                 d[x[1]] = s.slice(i + offset);
                 return true;
@@ -93,6 +98,7 @@ export function match(p: Pattern, s: any[]): Map<any> {
             offset += j - 1;
             return true;
         }
+        return false;
     }
     if (p.every(matchHelper)) {
         return d;

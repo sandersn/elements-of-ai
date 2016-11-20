@@ -13,13 +13,13 @@ export function existsTree(tree: any[], x: any): boolean {
     if (isAtom(tree)) return tree === x;
     return tree.some(child => isAtom(child) ? child === x : existsTree(child, x));
 }
-export function rewriteTreeSingle(tree: Expression, f: (x: any) => any): Expression {
+export function rewriteTreeSingle(tree: Expression, f: (x: any) => any): Expression | undefined {
     function update(tree: Expression, i: number, x: any) {
         const copy = tree.slice();
         copy[i] = x;
         return copy;
     }
-    function recur(tree: Expression): Expression {
+    function recur(tree: Expression): Expression | undefined {
         const topLevel = f(tree);
         if (topLevel !== undefined || !Array.isArray(tree)) {
             return topLevel;
@@ -49,6 +49,7 @@ function binaryDiffHelper(pattern: Pattern): (v: any, d: State) => boolean {
             }
             return true;
         }
+        return false;
     }
 }
 function isNumber(x: any): x is number {
@@ -149,13 +150,13 @@ const decRule: Rule = {
     fire: d => d['x'] - 1,
     name: "decRule"
 }
-                  
+
 export const rules: Rule[][] = [
     [diffSumRule, diffXRule, diffConstRule, diffProductRule, diffPowerRule],
     [laddZeroRule, raddZeroRule, addConstRule, lprodZeroRule, rprodZeroRule, lprodIdRule, rprodIdRule, prodConstRule, expZeroRule, expIdRule, decRule]]
 
 /// control scheme ///
-export function tryRule(expression: Expression, rule: Rule): Expression {
+export function tryRule(expression: Expression, rule: Rule): Expression | undefined {
     if (isAtom(expression)) return undefined;
     return rewriteTreeSingle(expression, e => {
         const d: Map<any> = match.call(helpers, rule.pattern, e)
@@ -164,7 +165,7 @@ export function tryRule(expression: Expression, rule: Rule): Expression {
         }
     });
 }
-export function tryRules(formula: Expression, rules: Rule[]): Expression {
+export function tryRules(formula: Expression, rules: Rule[]): Expression | undefined {
     for (const rule of rules) {
         const newFormula = tryRule(formula, rule);
         if (newFormula !== undefined) {
@@ -173,7 +174,7 @@ export function tryRules(formula: Expression, rules: Rule[]): Expression {
     }
 }
 export function control(formula: Expression, ruleSets: Rule[][]) {
-    let newFormula: Expression = formula;
+    let newFormula: Expression | undefined = formula;
     for (const rules of ruleSets) {
         while (true) {
             newFormula = tryRules(formula, rules);

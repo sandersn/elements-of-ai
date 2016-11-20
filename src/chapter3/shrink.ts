@@ -13,7 +13,7 @@ const youMe: Map<string> = {
 const verbs: Map<number> = {
     go: 0,
     have: 0,
-    be: 0, 
+    be: 0,
     'try': 0,
     eat: 0,
     take: 0,
@@ -34,12 +34,12 @@ const verbs: Map<number> = {
     crunch: 0,
     add: 0
 };
-    
-    
+
+
 function convertYouMe(s: string[]): string[] {
     return s.map(word => youMe[word.toLowerCase()] || word);
 }
-function find<T,U>(f: (t: T) => U, l: T[]): T {
+function find<T,U>(f: (t: T) => U, l: T[]): T | undefined {
     for (const x of l) {
         if (f(x)) {
             return x;
@@ -88,7 +88,7 @@ export function shrink(read: () => string) {
         const production = find(([pattern,_]) => match(pattern, sentence), knowledge);
         if (production) {
             const [pattern,rule] = production;
-            const result = rule(match(pattern, sentence))
+            const result = rule(match(pattern, sentence)!)
             if (result) {
                 console.log(result);
                 return;

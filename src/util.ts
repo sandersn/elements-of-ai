@@ -1,7 +1,7 @@
 export interface Map<T> {
     [s: string]: T;
 }
-export function equal(x: any[] | number | string | boolean, y: any[] | number | string | boolean): boolean {
+export function equal(x: any[] | number | string | boolean | null, y: any[] | number | string | boolean | null): boolean {
     if (x === y) return true;
     else if (x == null || y == null) return false;
     else if (Array.isArray(x) && Array.isArray(y)) {
@@ -18,7 +18,7 @@ export function equal(x: any[] | number | string | boolean, y: any[] | number | 
 export function chooseRandom<T>(l: T[]): T {
     return l[Math.floor(Math.random() * l.length)];
 }
-export function findKey<T, U>(l: T[], f: (t: T) => U): U {
+export function findKey<T, U>(l: T[], f: (t: T) => U): U | undefined {
     for (const x of l) {
         const key = f(x);
         if (key) {

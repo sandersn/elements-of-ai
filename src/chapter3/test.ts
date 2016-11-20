@@ -35,13 +35,13 @@ function basicMatchTest(match: (p: any, s: any) => any) {
     });
     it("matches empty list matches an empty pattern", () => {
         expect(match([], [])).toBeTruthy();
-    }); 
+    });
     it("non-empty list doesn't match an empty pattern", () => {
         expect(match([], [1])).toBeFalsy();
-    }); 
+    });
     it("empty list doesn't match a non-empty pattern", () => {
         expect(match([1], [])).toBeFalsy();
-    }); 
+    });
 }
 function recursiveMatchTest(match: (p: any, s: any) => boolean) {
     it("matches recursively", () => {
@@ -56,15 +56,19 @@ function recursiveMatchTest(match: (p: any, s: any) => boolean) {
                      [1, [2, "not", "really"], 3])).toBe(false);
     });
 }
-function basicPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
+function basicPatternMatchTest(match: (p: any[], s: any[]) => Map<any> | undefined) {
     it("matches a simple wildcard", () => {
         expect(match([1, ["?", "x"], 3], [1, "not really", 3])).toBeTruthy();
     });
     it("has a value for a matching wildcard", () => {
-        expect(match([1, ["?", "x"], 3], [1, "not really", 3])["x"]).toBe('not really');
+        const m = match([1, ["?", "x"], 3], [1, "not really", 3]);
+        expect(m).not.toBeUndefined();
+        expect(m!["x"]).toBe('not really');
     });
     it("doesn't have a value for a non-matching wildcard", () => {
-        expect(match([1, ["?", "x"], 3], [1, "not really", 3])["y"]).toBeFalsy();
+        const m = match([1, ["?", "x"], 3], [1, "not really", 3])
+        expect(m).not.toBeUndefined();
+        expect(m!["y"]).toBeFalsy();
     });
     it("is empty for no wildcards", () => {
         expect(match([1, 2, 3], [1, 2, 3])).toEqual({});
@@ -83,7 +87,7 @@ function basicPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
     doesntMatch([1, ["!", 'x'], 3], [1, [2], 3]);
     doesntMatch([["?", 'x'], 3], [1, 2]);
 }
-function functionPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
+function functionPatternMatchTest(match: (p: any[], s: any[]) => Map<any> | undefined) {
     const functions: Map<(x: number) => boolean> = {
         isEqual1: x => x == 1
     };
@@ -100,7 +104,7 @@ function functionPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
             .toBeFalsy();
     });
 }
-function starPatternMatchTest(match: (p: any[], s: any[]) => Map<any>) {
+function starPatternMatchTest(match: (p: any[], s: any[]) => Map<any> | undefined) {
     it("star-matches the whole thing", () => {
         expect(match([["*", 'x']], ["the", 'whole', 'thing'])).toEqual({
             x: ["the", "whole", "thing"]

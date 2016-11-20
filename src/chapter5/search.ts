@@ -59,16 +59,16 @@ export const franceDistance: Map<[string,number][]> = {
     nantes: [['limoges', 329], ['bordeaux', 330], ['rennes', 107]],
     paris: [['calais', 297], ['nancy', 372], ['dijon', 313], ['limoges', 396], ['rennes', 348], ['caen', 241]]
 }
-export function depthFirstSearch(graph: Map<string[]>, start: string, goal: string): string[] {
+export function depthFirstSearch(graph: Map<string[]>, start: string, goal: string): string[] | null {
     let open = [start];
-    let pointers: Map<string> = {};
+    let pointers: Map<string | null> = {};
     let closed: string[] = [];
     let n: string;
     let l: string[];
     let openCount = 0;
     pointers[start] = null;
     while (open.length) {
-        n = open.pop();
+        n = open.pop()!;
         openCount++;
         closed.push(n);
         if (n === goal) {
@@ -84,16 +84,16 @@ export function depthFirstSearch(graph: Map<string[]>, start: string, goal: stri
     }
     return null;
 }
-export function breadthFirstSearch(graph: Map<string[]>, start: string, goal: string): [string[], number] {
+export function breadthFirstSearch(graph: Map<string[]>, start: string, goal: string): [string[], number] | null {
     let open = [start];
-    let pointers: Map<string> = {};
+    let pointers: Map<string | null> = {};
     let closed: string[] = [];
     let n: string;
     let l: string[];
     let openCount = 0;
     pointers[start] = null;
     while (open.length) {
-        n = open.pop();
+        n = open.pop()!;
         openCount++;
         closed.push(n);
         if (n === goal) {
@@ -109,8 +109,8 @@ export function breadthFirstSearch(graph: Map<string[]>, start: string, goal: st
     }
     return null;
 }
-export function bestFirstSearch(graph: Map<string[]>, f: (s: string) => number, start: string, goal: string): [string[], number] {
-    const pointers: Map<string> = {};
+export function bestFirstSearch(graph: Map<string[]>, f: (s: string) => number, start: string, goal: string): [string[], number] | null {
+    const pointers: Map<string | null> = {};
     const values: Map<number> = {};
     let open = [start];
     const closed: string[] = [];
@@ -118,7 +118,7 @@ export function bestFirstSearch(graph: Map<string[]>, f: (s: string) => number, 
     values[start] = f(start);
     let openCount = 0;
     while (open.length) {
-        const n = open.pop();
+        const n = open.pop()!;
         closed.push(n);
         if (n === goal) {
             return [extractPath(pointers, n), openCount];
@@ -142,9 +142,8 @@ export function bestFirstSearch(graph: Map<string[]>, f: (s: string) => number, 
 }
 type Distance = number & { _brand1: any };
 export type Intercity = number & { _brand2: any };
-declare function f(m: Map<Distance>, s: string, dst: Intercity): Distance;
-export function uniformCost(graph: Map<[string, Intercity][]>, start: string, goal: string): [string[], number] {
-    const pointers: Map<string> = {};
+export function uniformCost(graph: Map<[string, Intercity][]>, start: string, goal: string): [string[], number] | null {
+    const pointers: Map<string | null> = {};
     const values: Map<Distance> = {};
     let open: string[] = [start];
     const closed: string[] = [];
@@ -152,7 +151,7 @@ export function uniformCost(graph: Map<[string, Intercity][]>, start: string, go
     values[start] = 0 as Distance;
     let openCount = 1;
     while (open.length) {
-        const n = open.pop();
+        const n = open.pop()!;
         closed.push(n);
         if (n === goal) {
             return [extractPath(pointers, n), openCount];
@@ -160,8 +159,7 @@ export function uniformCost(graph: Map<[string, Intercity][]>, start: string, go
         const l = graph[n];
         for (const remaining of setDifferenceFirst(l, closed)) {
             const [m, dst] = remaining;
-            const temp: Distance = (values[n] as number + (dst as number)) as Distance;
-            const tmp = f(values, n, dst);
+            const temp = (values[n] + dst) as Distance;
             if (open.indexOf(m) > -1) {
                 if (temp < values[m]) {
                     values[m] = temp;
@@ -229,10 +227,9 @@ function intersection<T>(ts: T[], add: T[]): T[] {
 export function longitudeDifference(n1: string, n2: string): number {
     return Math.abs(longitude[n1] - longitude[n2]);
 }
-function extractPath(pointers: Map<string>, p: string): string[] {
+function extractPath(pointers: Map<string | null>, p: string | null): string[] {
     const path: string[] = [];
     while(p !== null) {
-        console.log(p)
         path.push(p);
         p = pointers[p];
     }
