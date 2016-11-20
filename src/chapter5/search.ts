@@ -142,6 +142,7 @@ export function bestFirstSearch(graph: Map<string[]>, f: (s: string) => number, 
 }
 type Distance = number & { _brand1: any };
 export type Intercity = number & { _brand2: any };
+declare function f(m: Map<Distance>, s: string, dst: Intercity): Distance;
 export function uniformCost(graph: Map<[string, Intercity][]>, start: string, goal: string): [string[], number] {
     const pointers: Map<string> = {};
     const values: Map<Distance> = {};
@@ -160,6 +161,7 @@ export function uniformCost(graph: Map<[string, Intercity][]>, start: string, go
         for (const remaining of setDifferenceFirst(l, closed)) {
             const [m, dst] = remaining;
             const temp: Distance = (values[n] as number + (dst as number)) as Distance;
+            const tmp = f(values, n, dst);
             if (open.indexOf(m) > -1) {
                 if (temp < values[m]) {
                     values[m] = temp;

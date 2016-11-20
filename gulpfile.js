@@ -5,7 +5,7 @@ var jasmine = require('gulp-jasmine');
 
 gulp.task("default", function () {
     return tsProject.src()
-        .pipe(ts(tsProject))
+        .pipe(tsProject())
         .js.pipe(gulp.dest("out"));
 });
 gulp.task("test", ["default"], function () {
