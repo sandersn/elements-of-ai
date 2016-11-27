@@ -1,7 +1,7 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
 import { rotateList, orient, matchNorth, matchWest, sidesOk, solveSquares, solve, Pattern, Orientation } from "./painted-squares";
-import { france, franceDistance, depthFirstSearch, breadthFirstSearch, bestFirstSearch, uniformCost, longitudeDifference, Intercity } from "./search";
+import { france, franceDistance, depthFirstSearch, breadthFirstSearch, bestFirstSearch, uniformCost, aStar, longitudeDifference, Intercity } from "./search";
 describe("rotateList", () => {
     const l = [1, 2, 3];
     it("no-ops 0", () => {
@@ -167,5 +167,14 @@ describe("uniformCost", () => {
                            'rennes',
                            'avignon')).toEqual(
                                [['rennes', 'nantes', 'limoges', 'lyon', 'avignon'], 19]);
+    });
+});
+describe("A* clean", () => {
+    it("works on France", () => {
+        expect(aStar(franceDistance as Map<[string, Intercity][]>,
+                          s => 0,
+                          'rennes',
+                          'avignon')).toEqual(
+                              [['rennes', 'nantes', 'limoges', 'lyon', 'avignon'], 19]);
     });
 });

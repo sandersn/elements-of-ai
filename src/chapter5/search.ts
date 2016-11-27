@@ -235,3 +235,90 @@ function extractPath(pointers: Map<string | null>, p: string | null): string[] {
     }
     return path.reverse();
 }
+function longitudeEstimate(n: string, goal: string): Distance {
+    return 10 * longitudeDifference(n, goal) as Distance;
+}
+function bestByList<T>(l: T[], f: (t: T) => number): T[] {
+    let bestValues: T[] = [];
+    let best = f(l[0]);
+    for (const x of l.slice(1)) {
+        const key = f(x);
+        if (key > best) {
+            bestValues = [x];
+        }
+        else if (key === best) {
+            bestValues.push(x);
+        }
+    }
+    return bestValues;
+}
+function find<T>(l: T[], f: (t: T) => boolean): T | undefined {
+    for (const x of l) {
+        if (f(x)) {
+            return x;
+        }
+    }
+}
+function remove<T>(l: T[], x: T): void {
+    const i = l.indexOf(x);
+    if (i > -1) {
+        l.splice(i, 1);
+    }
+}
+function moveNext(open: string[], estimatedTotal: Map<Distance>, goal: string) {
+    const l = bestByList(open, s => estimatedTotal[s]);
+    if (l == null) throw new Error("l is undefined");
+    return l.length === 1 ? l[0] : (find(l, x => x === goal) || l[0]);
+}
+export function aStar(graph: Map<[string, Intercity][]>, f: (s: string) => number, start: string, goal: string): [string[], number] | null {
+    const path: Map<string | null> = {};
+    const travelled: Map<Distance> = {};
+    const estimatedTotal: Map<Distance> = {};
+    let open: string[] = [start];
+    const closed: string[] = [];
+    path[start] = null;
+    travelled[start] = 0 as Distance;
+    // TODO Use f instead of (longitudeEstimate goal)
+    estimatedTotal[start] = longitudeEstimate(start, goal);
+
+    let found = false;
+    let openCount = 1;
+    // TODO: It would probably be better to order open by f every time its contents change
+    // (or f's value changes)
+    while (open.length && !found) {
+        const x = moveNext(open, estimatedTotal, goal);
+        remove(open, x);
+        closed.push(x);
+        if (x === goal) {
+            found = true;
+            return [extractPath(path, x), openCount];
+        }
+        const successors = graph[x];
+        for (const successor of successors) {
+            const [y, dst] = successor;
+            if (open.indexOf(y) === -1 && closed.indexOf(y) === -1) {
+                travelled[y] = travelled[x] + dst as Distance;
+                estimatedTotal[y] = travelled[y] + longitudeEstimate(y, goal) as Distance;
+                path[y] = x;
+                open.push(y);
+            }
+            else {
+                const z = path[y];
+                if (!z) throw new Error("could not find previous node in path");
+                const zy = find(graph[z], ([link, dst2]) => link === y);
+                if (!zy) throw new Error("could not find current node in previous node's edges");
+                const temp = estimatedTotal[y] - travelled[z] - zy[1] + travelled[x] + dst;
+                if (temp < estimatedTotal[y]) {
+                    travelled[y] = travelled[y] + temp - estimatedTotal[y] as Distance;
+                    estimatedTotal[y] = temp as Distance;
+                    path[y] = x;
+                    if (closed.indexOf(y) > -1) {
+                        open.push(y);
+                        remove(closed, y);
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
