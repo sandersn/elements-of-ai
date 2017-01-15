@@ -9,7 +9,7 @@ gulp.task("default", function () {
         .js.pipe(gulp.dest("out"));
 });
 gulp.task("test", ["default"], function () {
-    gulp.src("out/**/test.js").pipe(jasmine())
+    return gulp.src("out/**/test.js").pipe(jasmine())
 });
 gulp.task("shrink", ["default"], function () {
     var shrink = require('./out/chapter3/shrink');
@@ -22,4 +22,7 @@ gulp.task("linneus", ["default"], function () {
 gulp.task("painted-squares", ["default"], function () {
     var paintedSquares = require('./out/chapter5/painted-squares');
     paintedSquares.showSolution();
+});
+gulp.task("debug", ["default"], function () {
+    return gulp.src("out/chapter5/test.js").pipe(jasmine({ verbose: true }));
 });
