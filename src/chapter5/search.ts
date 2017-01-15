@@ -271,57 +271,54 @@ function moveNext(open: string[], estimatedTotal: Map<Distance>, goal: string) {
     return l.length === 1 ? l[0] : (find(l, x => x === goal) || l[0]);
 }
 export function aStar(graph: Map<[string, Intercity][]>, f: (n: string, goal: string) => Distance, start: string, goal: string): [string[], number] | null {
-    const path: Map<string | null> = {};
-    const travelled: Map<Distance> = {};
+    const predecessors: Map<string | null> = {};
+    const distance: Map<Distance> = {};
     const estimatedTotal: Map<Distance> = {};
     let open: string[] = [start];
     const closed: string[] = [];
-    path[start] = null;
-    travelled[start] = 0 as Distance;
+    predecessors[start] = null;
+    distance[start] = 0 as Distance;
     estimatedTotal[start] = f(start, goal);
 
     let found = false;
     let openCount = 1;
     // TODO: It would probably be better to order open by f every time its contents change
     // (or f's value changes)
-    if (open == null) throw new Error("open is undefined");
     while (open.length && !found) {
-        const x = moveNext(open, estimatedTotal, goal);
-        remove(open, x);
-        closed.push(x);
-        if (x === goal) {
+        const current = moveNext(open, estimatedTotal, goal);
+        remove(open, current);
+        closed.push(current);
+        if (current === goal) {
             found = true;
-            return [extractPath(path, x), openCount];
+            return [extractPath(predecessors, current), openCount];
         }
-        const successors = graph[x];
-        if (successors == null) throw new Error("successors is undefined");
-        for (const successor of successors) {
-            const [y, dst] = successor;
-            if (open.indexOf(y) === -1 && closed.indexOf(y) === -1) {
-                travelled[y] = travelled[x] + dst as Distance;
-                estimatedTotal[y] = travelled[y] + f(y, goal) as Distance;
-                path[y] = x;
-                open.push(y);
+        const successors = graph[current];
+        for (const [successor, dst] of successors) {
+            if (open.indexOf(successor) === -1 && closed.indexOf(successor) === -1) {
+                distance[successor] = distance[current] + dst as Distance;
+                estimatedTotal[successor] = distance[successor] + f(successor, goal) as Distance;
+                predecessors[successor] = current;
+                open.push(successor);
                 openCount++;
             }
             else {
-                const z = path[y];
-                const zy = z ? find(graph[z], ([link, dst2]) => link === y) : ["start", 0] as [string, Intercity];
+                const previousParent = predecessors[successor];
+                const zy = previousParent ? find(graph[previousParent], ([edge, _]) => edge === successor) : ["start", 0] as [string, Intercity];
+                const previousDistance = previousParent ? distance[previousParent] : 0 as Distance;
                 if (!zy) throw new Error("could not find current node in previous node's edges");
-                // If z is null, then then there is no parent, so travelled[z] === 0
-                const temp = estimatedTotal[y] - (z == null ? 0 : travelled[z]) - zy[1] + travelled[x] + dst;
-                if (temp < estimatedTotal[y]) {
-                    travelled[y] = travelled[y] + temp - estimatedTotal[y] as Distance;
-                    estimatedTotal[y] = temp as Distance;
-                    path[y] = x;
-                    if (closed.indexOf(y) > -1) {
-                        open.push(y);
-                        remove(closed, y);
+                const [_, alternateIntercity] = zy;
+                const alternateEstimate = estimatedTotal[successor] - previousDistance - alternateIntercity + distance[current] + dst;
+                if (alternateEstimate < estimatedTotal[successor]) {
+                    distance[successor] = distance[successor] + alternateEstimate - estimatedTotal[successor] as Distance;
+                    estimatedTotal[successor] = alternateEstimate as Distance;
+                    predecessors[successor] = current;
+                    if (closed.indexOf(successor) > -1) {
+                        open.push(successor);
+                        remove(closed, successor);
                     }
                 }
             }
         }
-        if (open == null) throw new Error("open is undefined");
     }
     return null;
 }
