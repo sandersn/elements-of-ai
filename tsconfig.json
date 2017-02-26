@@ -16,6 +16,7 @@
         "src/chapter5/painted-squares.ts",
         "src/chapter5/search.ts",
         "src/chapter5/test.ts",
-        "src/chapter6/prover.ts"
+        "src/chapter6/prover.ts",
+        "src/chapter6/test.ts"
     ]
 }
