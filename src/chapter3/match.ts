@@ -74,27 +74,28 @@ export function match(this: Map<(v: any, d:Map<any>) => boolean> | void, p: Patt
     const d: Map<any> = {};
     let offset: number = 0;
     const matchHelper = (x: Literal | Variable, i: number) => {
-        if (equal(x, s[i + offset])) {
+        const si = i + offset;
+        if (equal(x, s[si])) {
             return true;
         }
         if (!isLiteral(x)) {
             return false;
         }
-        if (x[0] === "?" || (this && this[x[0]] && this[x[0]](s[i + offset], d))) {
-            d[x[1]] = s[i + offset];
+        if (x[0] === "?" || (this && this[x[0]] && this[x[0]](s[si], d))) {
+            d[x[1]] = s[si];
             return true;
         }
         else if (x[0] === "*") {
             if (i + 1 === p.length) {
-                d[x[1]] = s.slice(i + offset);
+                d[x[1]] = s.slice(si);
                 return true;
             }
-            for(var j = 1; i + offset + j < s.length; j++) {
-                if (match([p[i + 1]], [s[i + offset + j]])) {
+            for(var j = 1; si + j < s.length; j++) {
+                if (match.call(this, [p[i + 1]], [s[si + j]])) {
                     break;
                 }
             }
-            d[x[1]] = s.slice(i + offset, i + offset + j);
+            d[x[1]] = s.slice(si, si + j);
             offset += j - 1;
             return true;
         }

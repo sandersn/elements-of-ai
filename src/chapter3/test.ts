@@ -136,6 +136,18 @@ function starPatternMatchTest(match: (p: any[], s: any[]) => Map<any> | undefine
                          x: ["*", 'specifies', 'a'],
                          y: 'card',
                          z: ["sequence", "element"]})
+        expect(match.call({ f: (x: any) => x === 'wild' },
+                          [["?", 'first'], ['f', 'y']],
+                          ['first', 'wild'])).toEqual({
+                              first: "first",
+                              y: "wild"
+                          });
+        expect(match.call({ f: (x: any) => x === 'wild' },
+                          [["*", 'x'], ["f", 'y'], ["*", 'z']],
+                          ["*", "specifies", 'a', 'wild', 'card', 'sequence', 'element'])).toEqual({
+                              x: ["*", 'specifies', 'a'],
+                              y: 'wild',
+                              z: ['card', "sequence", "element"]})
     });
 }
 describe("equal", () => {
