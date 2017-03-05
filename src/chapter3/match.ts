@@ -90,7 +90,7 @@ export function match(this: Map<(v: any, d:Map<any>) => boolean> | void, p: Patt
                 d[x[1]] = s.slice(si);
                 return true;
             }
-            for(var j = 1; si + j < s.length; j++) {
+            for(var j = 0; si + j < s.length; j++) {
                 if (match.call(this, [p[i + 1]], [s[si + j]])) {
                     break;
                 }

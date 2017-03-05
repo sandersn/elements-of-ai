@@ -149,6 +149,14 @@ function starPatternMatchTest(match: (p: any[], s: any[]) => Map<any> | undefine
                               y: 'wild',
                               z: ['card', "sequence", "element"]})
     });
+    it("matches prefixes followed by functions", () => {
+        let m = match.call({ f: (x: any) => x === 'wild' },
+                           [["*", 'x'], ['f', 'y']],
+                           ["wild"]);
+        expect(m).toBeDefined();
+        expect(m.x).toEqual([]);
+        expect(m.y).toEqual("wild");
+    });
 }
 describe("equal", () => {
     assert(false, equal([1], null), "[1] /= []");
