@@ -50,6 +50,16 @@ export function prove(answer: Proposition): string {
     //}
 }
 
+function concat<T>(...tss: T[][]): T[] {
+    const result = [];
+    for (const ts of tss) {
+        for (const t of ts) {
+            result.push(t);
+        }
+    }
+    return result;
+}
+
 export function valid(l: Proposition, r: Proposition): boolean {
     // if any element is in both l and r, this proposition is valid
     for (const x of l) {
@@ -57,32 +67,36 @@ export function valid(l: Proposition, r: Proposition): boolean {
             return true;
         }
     }
-    console.log(l);
+
     let m = match.call(helpers, [["*", 'x'], ['notWff', 'y'], ["*", 'z']], l);
     if (m) {
-        return valid(m.x.concat(m.z), r.concat(m.y.slice(1)));
+        const [_not, y] = m.y;
+        return valid([...m.x, ...m.z], [...r, [y]]);
     }
     m = match.call(helpers, [["*", 'x'], ['notWff', 'y'], ["*", 'z']], r);
     if (m) {
-        return valid(l.concat(m.y.slice(1)), m.x.concat(m.z));
+        const [_not, y] = m.y;
+        return valid([...l, [y]], [...m.x, ...m.z]);
     }
     m = match.call(helpers, [["*", 'x'], ['orWff', 'y'], ["*", 'z']], r);
     if (m) {
-        return valid(l, m.x.concat([m.y[0]]).concat(m.y.slice(2)).concat(m.z));
+        const [yl, _or, yr] = m.y;
+        return valid(l, [...m.x, [yl], [yr], ...m.z]);
     }
     m = match.call(helpers, [["*", 'x'], ['andWff', 'y'], ["*", 'z']], l);
     if (m) {
-        return valid(m.x.concat([m.y[0]]).concat(m.y.slice(2)).concat(m.z), r);
+        const [yl, _and, yr] = m.y;
+        return valid([...m.x, [yl], [yr], ...m.z], r);
     }
     m = match.call(helpers, [["*", 'x'], ['orWff', 'y'], ["*", 'z']], l);
     if (m) {
-        return valid(m.x.concat([m.y[0]]), r) &&
-            valid(m.x.concat(m.y.slice(2)), r);
+        const [yl, _or, yr] = m.y;
+        return valid([...m.x, [yl]], r) && valid([...m.x, [yr]], r);
     }
     m = match.call(helpers, [["*", 'x'], ['andWff', 'y'], ["*", 'z']], r);
     if (m) {
-        return valid(l, m.x.concat([m.y[0]])) &&
-            valid(l, m.x.concat(m.y.slice(2)));
+        const [yl, _and, yr] = m.y;
+        return valid(l, [...m.x, [yl]]) && valid(l, [...m.x, [yr]]);
     }
     return false;
 }

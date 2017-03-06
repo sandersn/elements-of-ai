@@ -3,10 +3,10 @@ import { equal, Map } from "../util";
 import { parse, format, valid, prove, normalise, wff } from "./prover"
 describe("prove", () => {
     it("validates intersection", () => {
-        //expect(prove([[]])).toEqual("VALID");
+        // expect(prove([[]])).toEqual("VALID");
     });
     it("passes the example", () => {
-        //expect(prove(parse("(a & (not b)) -> a"))).toEqual("VALID");
+        // expect(prove(parse("(a & (not b)) -> a"))).toEqual("VALID");
     });
 });
 function runValidate(ls: string[], rs: string[], equals: boolean) {
@@ -24,7 +24,16 @@ describe("valid", () => {
     run({
         "validates intersection": [['x'], ['x', 'x & y'], true],
         "negative validates intersection": [['x'], ['x & y'], false],
-        "validates negation": [['x', 'not x'], ['x & y'], true],
+        "validates negation (l)": [['x', 'not x'], ['x & y'], true],
+        "validates negation (l2)": [['not x', 'x', ], ['x & y'], true],
+        "validates negation (r)": [['x & y'], ['x', 'not x'], true],
+        "validates negation (r2)": [['x & y'], ['not x', 'x'], true],
+        // on the right, should transform x | y to x, y and then match
+        "validates or (r, lhs)": [['x'], ['x | y'], true],
+        "validates or (r, rhs)": [['y'], ['x | y'], true],
+        // on the left, should transform x & y to x, y and then match
+        "validates and (l, lhs)": [['x & y'], ['x'], true],
+        "validates and (l, rhs)": [['x & y'], ['y'], true],
     });
 });
 describe("normalise", () => {
