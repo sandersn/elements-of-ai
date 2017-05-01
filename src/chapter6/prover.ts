@@ -71,32 +71,32 @@ export function valid(l: Proposition, r: Proposition): boolean {
     let m = match.call(helpers, [["*", 'x'], ['notWff', 'y'], ["*", 'z']], l);
     if (m) {
         const [_not, y] = m.y;
-        return valid([...m.x, ...m.z], [...r, [y]]);
+        return valid([...m.x, ...m.z], [...r, y]);
     }
     m = match.call(helpers, [["*", 'x'], ['notWff', 'y'], ["*", 'z']], r);
     if (m) {
         const [_not, y] = m.y;
-        return valid([...l, [y]], [...m.x, ...m.z]);
+        return valid([...l, y], [...m.x, ...m.z]);
     }
     m = match.call(helpers, [["*", 'x'], ['orWff', 'y'], ["*", 'z']], r);
     if (m) {
         const [yl, _or, yr] = m.y;
-        return valid(l, [...m.x, [yl], [yr], ...m.z]);
+        return valid(l, [...m.x, yl, yr, ...m.z]);
     }
     m = match.call(helpers, [["*", 'x'], ['andWff', 'y'], ["*", 'z']], l);
     if (m) {
         const [yl, _and, yr] = m.y;
-        return valid([...m.x, [yl], [yr], ...m.z], r);
+        return valid([...m.x, yl, yr, ...m.z], r);
     }
     m = match.call(helpers, [["*", 'x'], ['orWff', 'y'], ["*", 'z']], l);
     if (m) {
         const [yl, _or, yr] = m.y;
-        return valid([...m.x, [yl]], r) && valid([...m.x, [yr]], r);
+        return valid([...m.x, yl, ...m.z], r) && valid([...m.x, yr, ...m.z], r);
     }
     m = match.call(helpers, [["*", 'x'], ['andWff', 'y'], ["*", 'z']], r);
     if (m) {
         const [yl, _and, yr] = m.y;
-        return valid(l, [...m.x, [yl]]) && valid(l, [...m.x, [yr]]);
+        return valid(l, [...m.x, yl, ...m.z]) && valid(l, [...m.x, yr, ...m.z]);
     }
     return false;
 }
@@ -108,15 +108,15 @@ export function normalise(x: Proposition): Proposition {
     if (!wff(x)) {
         throw new Error("syntax error");
     }
-    const [l, c, r] = x;
+    const [l, op, r] = x;
     if (notWff(x)) {
-        return ['not', normalise(c)];
+        return ['not', normalise(op)];
     }
-    else if (c === 'implies') {
+    else if (op === 'implies') {
         return [['not', normalise(l)], 'or', normalise(r)];
     }
     else {
-        return [normalise(l), c, normalise(r)];
+        return [normalise(l), op, normalise(r)];
     }
 }
 export function wff(x: Proposition): boolean {
@@ -138,7 +138,7 @@ export function parse(s: string): Proposition {
     if (i !== tokens.length) {
         throw new Error(`parse error: ${i} is less than ${tokens.length}`);
     }
-    return Array.isArray(e) ? e : [e];
+    return e;
 
     function next(): string {
         const s = tokens[i];

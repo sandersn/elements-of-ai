@@ -2,11 +2,8 @@
 import { equal, Map } from "../util";
 import { parse, format, valid, prove, normalise, wff } from "./prover"
 describe("prove", () => {
-    it("validates intersection", () => {
-        // expect(prove([[]])).toEqual("VALID");
-    });
     it("passes the example", () => {
-        // expect(prove(parse("(a & (not b)) -> a"))).toEqual("VALID");
+        expect(prove(parse("(a & (not b)) -> a"))).toEqual("VALID");
     });
 });
 function runValidate(ls: string[], rs: string[], equals: boolean) {
@@ -23,7 +20,7 @@ function run(x: Map<[string[], string[], boolean]>) {
 describe("valid", () => {
     run({
         "validates intersection": [['x'], ['x', 'x & y'], true],
-        "negative validates intersection": [['x'], ['x & y'], false],
+        "invalidates intersection": [['x'], ['x & y'], false],
         "validates negation (l)": [['x', 'not x'], ['x & y'], true],
         "validates negation (l2)": [['not x', 'x', ], ['x & y'], true],
         "validates negation (r)": [['x & y'], ['x', 'not x'], true],
@@ -34,6 +31,18 @@ describe("valid", () => {
         // on the left, should transform x & y to x, y and then match
         "validates and (l, lhs)": [['x & y'], ['x'], true],
         "validates and (l, rhs)": [['x & y'], ['y'], true],
+        // on the left, should transform x | y -> x to x -> x && y -> x
+        "validates or (l)": [["x | y"], ["x", "y"], true],
+        "invalidates or (l)": [["x | y"], ["y"], false],
+        // on the right, should transform x -> x & y to x -> x && x -> y
+        "validates and (r)": [["x", "y"], ["x & y"], true],
+        "invalidates and (r)": [["x"], ["x & y"], false],
+        "validates the book's example (1)": [['(not p) | q', '(not q) | r', 'not r'],
+                                             ["not p"],
+                                             true],
+        "validates the book's example (2)": [['a | b', 'not (b & c)'],
+                                             ["(not c) | a"],
+                                             true],
     });
 });
 describe("normalise", () => {
@@ -75,6 +84,9 @@ describe("wff", () => {
     });
 });
 describe("parse", () => {
+    it("parses x", () => {
+        expect(parse("x")).toEqual('x');
+    });
     it("parses x => y", () => {
         expect(parse("x -> y")).toEqual(['x', 'implies', 'y']);
     });
