@@ -1,13 +1,14 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
-import { parse, format, valid, prove, normalise, wff } from "./prover"
+import { parse as parseProver, format, valid, prove, normalise, wff } from "./prover"
+import { parse as parseUnify } from "./unify"
 describe("prove", () => {
     it("passes the example", () => {
-        expect(prove(parse("(a & (not b)) -> a"))).toEqual("VALID");
+        expect(prove(parseProver("(a & (not b)) -> a"))).toEqual("VALID");
     });
 });
 function runValidate(ls: string[], rs: string[], equals: boolean) {
-    expect(valid(ls.map(parse), rs.map(parse))).toEqual(equals);
+    expect(valid(ls.map(parseProver), rs.map(parseProver))).toEqual(equals);
 }
 function run(x: Map<[string[], string[], boolean]>) {
     for (const k in x) {
@@ -53,11 +54,11 @@ describe("normalise", () => {
         expect(() => normalise(['singleton'])).toThrowError("syntax error");
     });
     it("rewrites implication", () => {
-        expect(normalise(parse("x -> y"))).toEqual(parse("(not x) | y"));
+        expect(normalise(parseProver("x -> y"))).toEqual(parseProver("(not x) | y"));
     });
     it("rewrites nested implications", () => {
-        expect(normalise(parse("(x -> y) -> z -> alpha"))).toEqual(
-            parse("(not ((not x) or y)) or ((not z) or alpha)"));
+        expect(normalise(parseProver("(x -> y) -> z -> alpha"))).toEqual(
+            parseProver("(not ((not x) or y)) or ((not z) or alpha)"));
     });
 });
 describe("wff", () => {
@@ -68,56 +69,91 @@ describe("wff", () => {
         expect(wff(['x'])).toEqual(false);
     });
     it("is true for 2-element not-lists", () => {
-        expect(wff(parse("not x"))).toEqual(true);
+        expect(wff(parseProver("not x"))).toEqual(true);
     });
     it("is false for other 2-element lists", () => {
         expect(wff(['x', 'y'])).toEqual(false);
     });
     it("is true for 3-element operator expressions", () => {
-        expect(wff(parse("x => y"))).toEqual(true);
+        expect(wff(parseProver("x => y"))).toEqual(true);
     });
     it("is false for other 3-element expressions", () => {
         expect(wff(['x', 'whatever', 'y'])).toEqual(false);
     });
     it("is true for well-formed nested expressions", () => {
-        expect(wff(parse("(not x) & (y -> x)"))).toEqual(true);
+        expect(wff(parseProver("(not x) & (y -> x)"))).toEqual(true);
     });
 });
-describe("parse", () => {
+describe("parseProver", () => {
     it("parses x", () => {
-        expect(parse("x")).toEqual('x');
+        expect(parseProver("x")).toEqual('x');
     });
     it("parses x => y", () => {
-        expect(parse("x -> y")).toEqual(['x', 'implies', 'y']);
+        expect(parseProver("x -> y")).toEqual(['x', 'implies', 'y']);
     });
     it("parses (x) => y", () => {
-        expect(parse("(x) => y")).toEqual(['x', 'implies', 'y']);
+        expect(parseProver("(x) => y")).toEqual(['x', 'implies', 'y']);
     });
     it("parses not x & y", () => {
-        expect(parse("not x & y")).toEqual(['not', ['x', 'and', 'y']]);
+        expect(parseProver("not x & y")).toEqual(['not', ['x', 'and', 'y']]);
     });
     it("parses (not x) & y", () => {
-        expect(parse("(not x) & y")).toEqual([['not', 'x'], 'and', 'y']);
+        expect(parseProver("(not x) & y")).toEqual([['not', 'x'], 'and', 'y']);
     });
     it("parses (not x) and (y -> x)", () => {
-        expect(parse("(not x) and y -> x")).toEqual([["not", 'x'], 'and', ['y', 'implies', 'x']]);
+        expect(parseProver("(not x) and y -> x")).toEqual([["not", 'x'], 'and', ['y', 'implies', 'x']]);
     });
     it("parses (not x) and (y -> x)", () => {
-        expect(parse("(not x) and y -> x")).toEqual([["not", 'x'], 'and', ['y', 'implies', 'x']]);
+        expect(parseProver("(not x) and y -> x")).toEqual([["not", 'x'], 'and', ['y', 'implies', 'x']]);
     });
     it("parses x -> y -> z -> alpha", () => {
-        expect(parse("x -> y -> z -> alpha")).toEqual(['x', 'implies', ['y', 'implies', ['z', 'implies', 'alpha']]]);
+        expect(parseProver("x -> y -> z -> alpha")).toEqual(['x', 'implies', ['y', 'implies', ['z', 'implies', 'alpha']]]);
     });
     it("parses (x -> y) -> z -> alpha", () => {
-        expect(parse("(x -> y) -> z -> alpha")).toEqual([['x', 'implies', 'y'], 'implies', ['z', 'implies', 'alpha']]);
+        expect(parseProver("(x -> y) -> z -> alpha")).toEqual([['x', 'implies', 'y'], 'implies', ['z', 'implies', 'alpha']]);
     });
 
 });
 describe("format", () => {
     it("formats x=> y", () => {
-        expect(format(parse("x -> y"))).toEqual("(x implies y)");
+        expect(format(parseProver("x -> y"))).toEqual("(x implies y)");
     });
     it("formats (not x) => y", () => {
-        expect(format(parse("(not x) -> y"))).toEqual("((not x) implies y)");
+        expect(format(parseProver("(not x) -> y"))).toEqual("((not x) implies y)");
+    });
+});
+
+describe("parseUnify", () => {
+    it("parses basic non-nested literal", () => {
+        expect(parseUnify("P(b, x)")).toEqual({
+            type: "term",
+            name: "P",
+            arguments: [
+                { type: "term", name: "b" },
+                { type: "variable", name: "x" },
+            ]
+        });
+    });
+    it("parses nested literal", () => {
+        expect(parseUnify("P(f(h(b)), g(x, y))")).toEqual({
+            type: "term",
+            name: "P",
+            arguments: [{
+                type: "term",
+                name: "f",
+                arguments: [{
+                    type: "term",
+                    name: "h",
+                    arguments: [ { type: "term", name: "b" } ]
+                }]
+            }, {
+                type: "term",
+                name: "g",
+                arguments: [
+                    { type: "variable", name: "x" },
+                    { type: "variable", name: "y" }
+                ]
+            }]
+        });
     });
 });
