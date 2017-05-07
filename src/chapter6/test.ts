@@ -1,7 +1,7 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
 import { parse as parseProver, format, valid, prove, normalise, wff } from "./prover"
-import { parse as parseUnify } from "./unify"
+import { parse as parseUnify, unify, Literal, Term } from "./unify"
 describe("prove", () => {
     it("passes the example", () => {
         expect(prove(parseProver("(a & (not b)) -> a"))).toEqual("VALID");
@@ -155,5 +155,27 @@ describe("parseUnify", () => {
                 ]
             }]
         });
+    });
+});
+
+describe("unify", () => {
+    it("unifies nested literals", () => {
+        const l1 = parseUnify("P(f(x), g(a, x))") as Term;
+        const l2 = parseUnify("P(f(h(b)), g(x, y))") as Term;
+        // TODO: This is almost certainly wrong!
+        expect(unify(l1, l2)).toEqual([
+            [ { type: 'variable', name: 'y' }, { type: 'variable', name: 'x' } ],
+            [ { type: 'variable', name: 'x' }, { type: 'variable', name: 'x' } ],
+            [ { type: 'term', name: 'h',
+                arguments: [ { type: 'term', name: 'h',
+                               arguments: [ { type: 'variable', name: 'x' } ] } ] },
+              { type: 'variable', name: 'x' } ]
+        ]
+        );
+    });
+    it("fails the occurs check", () => {
+        const l1 = parseUnify("P(x)") as Term;
+        const l2 = parseUnify("P(f(x))") as Term;
+        expect(unify(l1, l2)).toEqual('not-unifiable');
     });
 });
