@@ -6,7 +6,7 @@ import * as readline from 'readline';
 export interface Variable { type: 'variable', name: string }
 export interface Term { type: 'term', name: string, arguments?: Literal[] };
 export type Literal = Variable | Term;
-type Substitution = [Literal, Variable][]
+export type Substitution = [Literal, string][]
 
 export function unify(literal1: Term, literal2: Term): Substitution | 'not-unifiable' {
     let u: Substitution = [];
@@ -18,10 +18,7 @@ export function unify(literal1: Term, literal2: Term): Substitution | 'not-unifi
             if (e === 'not-unifiable') {
                 return 'not-unifiable';
             }
-            else {
-                // Not sure how to re-throw in Javascript
-                throw e;
-            }
+            throw e;
         }
     }
     return 'not-unifiable';
@@ -45,6 +42,7 @@ function unify1(term1: Literal, term2: Literal, u: Substitution): Substitution {
         return addPair(term2, term1, u);
     }
     if (term2.type === 'variable') {
+        // TODO: If both are variables, add the one that doesn't exist yet
         return addPair(term1, term2, u);
     }
     if (!term1.arguments || !term2.arguments) {
@@ -66,16 +64,16 @@ function areAtomicLiteralsEqual(l1: Literal, l2: Literal) {
         l1.name === l2.name;
 }
 
-function addPair(l: Literal, v: Variable, u: Substitution): Substitution {
-    if (occursIn(v, l)) {
+function addPair(literal: Literal, variable: Variable, u: Substitution): Substitution {
+    if (occursIn(variable, literal)) {
         throw 'not-unifiable';
     }
-    const updated = u.map(([l, v]) => [subst(l, v, l), v] as [Term, Variable]);
-    return [[l as Term, v], ...updated];
+    const updated = u.map(([l, v]) => [subst(literal, variable.name, l), v] as [Term, string]);
+    return [[literal as Term, variable.name], ...updated];
 }
 
 function occursIn(v: Variable, l: Literal): boolean {
-    if (v === l) {
+    if (l.type === 'variable' && v.name === l.name) {
         return true;
     }
     else if (l.type === 'variable' || !l.arguments) {
@@ -84,18 +82,28 @@ function occursIn(v: Variable, l: Literal): boolean {
     return l.arguments.some(child => occursIn(v, child));
 }
 
-function subst(noo: Literal, old: Variable, l: Literal): Literal {
-    if (old === l) {
+function subst(noo: Literal, old: string, l: Literal): Literal {
+    if (old === l.name) {
         return noo;
     }
     if (l.type === 'variable' || !l.arguments) {
-        return old;
+        return l;
     }
     return {
         type: 'term',
         name: l.name,
         arguments: l.arguments.map(arg => subst(noo, old, arg))
     };
+}
+
+export function substitute(l: Literal, u: Substitution): Literal {
+    if (u.length === 0) {
+        return l;
+    }
+    else {
+        const [literal, vname] = u[0];
+        return subst(literal, vname, substitute(l, u.slice(1)));
+    }
 }
 
 export function parse(s: string): Literal {

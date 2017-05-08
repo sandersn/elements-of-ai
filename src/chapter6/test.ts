@@ -1,7 +1,7 @@
 /// <reference path="../../typings/jasmine.d.ts"/>
 import { equal, Map } from "../util";
 import { parse as parseProver, format, valid, prove, normalise, wff } from "./prover"
-import { parse as parseUnify, unify, Literal, Term } from "./unify"
+import { parse as parseUnify, unify, substitute, Literal, Term, Substitution } from "./unify"
 describe("prove", () => {
     it("passes the example", () => {
         expect(prove(parseProver("(a & (not b)) -> a"))).toEqual("VALID");
@@ -159,19 +159,97 @@ describe("parseUnify", () => {
 });
 
 describe("unify", () => {
-    it("unifies nested literals", () => {
+    it("trivially unifies identical literals", () => {
+        const l1 = parseUnify("P(b)") as Term;
+        const l2 = parseUnify("P(b)") as Term;
+        expect(unify(l1, l2)).toEqual([]);
+    });
+    it("unifies a simple variable", () => {
+        const l1 = parseUnify("P(b)") as Term;
+        const l2 = parseUnify("P(x)") as Term;
+        expect(unify(l1, l2)).toEqual([
+            [ { type: 'term', name: 'b' }, 'x' ]
+        ]);
+    });
+    it("passes the first test", () => {
+        const l1 = parseUnify("P(x, f(a))") as Term;
+        const l2 = parseUnify("P(b, y)") as Term;
+        expect(unify(l1, l2)).toEqual([
+            [ { type: 'term', name: 'f', arguments: [{type: 'term', name: 'a'}] },
+              'y' ],
+            [ { type: 'term', name: 'b' }, 'x' ]
+        ]);
+    });
+    it("passes the second test", () => {
+        // TODO: This should NOT unify because x -> h(b) is not compatible
+        // with x -> a (or x -> y, probably should be y -> x anyway)
         const l1 = parseUnify("P(f(x), g(a, x))") as Term;
         const l2 = parseUnify("P(f(h(b)), g(x, y))") as Term;
-        // TODO: This is almost certainly wrong!
+
+        const l1 = parseUnify("P(f(x), g(a, y))") as Term;
+        const l2 = parseUnify("P(f(h(b)), g(x, x))") as Term;
+        // P(f(h(b)), g(h(b), h(b)))
+        // TODO: This is pretty weird
+        // x -> y
+        // x -> a
+        // x -> h(b)
+        // P(f(h(b)), g(a, h(b)))
         expect(unify(l1, l2)).toEqual([
-            [ { type: 'variable', name: 'y' }, { type: 'variable', name: 'x' } ],
-            [ { type: 'variable', name: 'x' }, { type: 'variable', name: 'x' } ],
-            [ { type: 'term', name: 'h',
-                arguments: [ { type: 'term', name: 'h',
-                               arguments: [ { type: 'variable', name: 'x' } ] } ] },
-              { type: 'variable', name: 'x' } ]
-        ]
-        );
+            [ { type: 'variable', name: 'y' }, 'x' ],
+            [ { type: 'term', name: 'a' }, 'x' ],
+            [ { type: 'term', name: 'h', arguments: [ { type: 'term', name: 'b' } ] }, 'x' ]
+        ]);
+    });
+    it("passes the fourth test", () => {
+        const l1 = parseUnify("P(x, f(y), x)") as Term;
+        const l2 = parseUnify("P(z, f(z), a)") as Term;
+        expect(unify(l1, l2)).toEqual([
+            [{ type: 'term', name: 'a' }, 'x'],
+            [{ type: 'variable', name: 'z' }, 'y'],
+            [{ type: 'variable', name: 'z' }, 'x'],
+        ]);
+    });
+    it("produces a correct unification", () => {
+        const l1 = parseUnify("P(x, f(y), x)") as Term;
+        const l2 = parseUnify("P(z, f(z), a)") as Term;
+        expect(substitute(l1, unify(l1, l2) as Substitution)).toEqual({
+            type: 'term',
+            name: 'P',
+            arguments: [
+                { type: 'term', name: 'a' },
+                { type: 'term', name: 'f', arguments: [ { type: 'term', name: 'a' } ] },
+                { type: 'term', name: 'a' },
+            ]
+        });
+        expect(substitute(l2, unify(l1, l2) as Substitution)).toEqual({
+            type: 'term',
+            name: 'P',
+            arguments: [
+                { type: 'term', name: 'a' },
+                { type: 'term', name: 'f', arguments: [ { type: 'term', name: 'a' } ] },
+                { type: 'term', name: 'a' },
+            ]
+        });
+        Object({ type: 'term',
+                 name: 'P',
+                 arguments: [
+                     Object({ type: 'variable', name: 'z' }),
+                     Object({ type: 'term', name: 'f', arguments: [ Object({ type: 'variable', name: 'z' }) ] }),
+                     Object({ type: 'variable', name: 'z' }) ] })
+        ject({ type: 'term',
+               name: 'P',
+               arguments: [
+                   Object({ type: 'variable', name: 'z' }),
+                   Object({ type: 'term', name: 'f', arguments: [ Object({ type: 'variable', name: 'z' }) ] }),
+                   Object({ type: 'term', name: 'a' }) ] })
+    });
+    it("passes the example", () => {
+        const l1 = parseUnify("A(x, f(y))") as Term;
+        const l2 = parseUnify("A(a, f(g(z)))") as Term;
+        expect(unify(l1, l2)).toEqual([
+            [ { type: 'term', name: 'g', arguments: [ { type: 'variable', name: 'z' } ] },
+              'y' ],
+            [ { type: 'term', name: 'a' }, 'x' ]]);
     });
     it("fails the occurs check", () => {
         const l1 = parseUnify("P(x)") as Term;
