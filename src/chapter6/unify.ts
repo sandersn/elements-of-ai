@@ -1,18 +1,18 @@
 /// <reference path='../../typings/node.d.ts' />
 import { match, Pattern, isAtom } from '../chapter3/match';
-import { equal } from '../util';
+import { equal, Map } from '../util';
 import * as readline from 'readline';
 
 export interface Variable { type: 'variable', name: string }
 export interface Term { type: 'term', name: string, arguments?: Literal[] };
 export type Literal = Variable | Term;
-export type Substitution = [Literal, string][]
+export type Substitution = Map<Literal>
 
 export function unify(literal1: Term, literal2: Term): Substitution | 'not-unifiable' {
-    let u: Substitution = [];
+    let u: Substitution = {};
     if (literal1.name === literal2.name && literal1.arguments && literal2.arguments) {
         try {
-            return unifyArguments(literal1.arguments, literal2.arguments, u);
+            return closure(unifyArguments(literal1.arguments, literal2.arguments, u));
         }
         catch (e) {
             if (e === 'not-unifiable') {
@@ -42,7 +42,6 @@ function unify1(term1: Literal, term2: Literal, u: Substitution): Substitution {
         return addPair(term2, term1, u);
     }
     if (term2.type === 'variable') {
-        // TODO: If both are variables, add the one that doesn't exist yet
         return addPair(term1, term2, u);
     }
     if (!term1.arguments || !term2.arguments) {
@@ -68,8 +67,23 @@ function addPair(literal: Literal, variable: Variable, u: Substitution): Substit
     if (occursIn(variable, literal)) {
         throw 'not-unifiable';
     }
-    const updated = u.map(([l, v]) => [subst(literal, variable.name, l), v] as [Term, string]);
-    return [[literal as Term, variable.name], ...updated];
+    if (variable.name in u) {
+        const conflict = u[variable.name];
+        if (conflict.type === 'variable') {
+            // swap the variable -> variable rule to avoid conflict
+            u[conflict.name] = { type: 'variable', name: variable.name };
+        }
+        else {
+            throw 'not-unifiable';
+        }
+    }
+    // TODO: Probably doesn't actually need to copy
+    let noo: Substitution = {}
+    for (const v in u) {
+        noo[v] = subst(literal, variable.name, u[v]);
+    }
+    noo[variable.name] = literal;
+    return noo;
 }
 
 function occursIn(v: Variable, l: Literal): boolean {
@@ -97,13 +111,25 @@ function subst(noo: Literal, old: string, l: Literal): Literal {
 }
 
 export function substitute(l: Literal, u: Substitution): Literal {
-    if (u.length === 0) {
-        return l;
+    for (const v in u) {
+        l = subst(u[v], v, l);
     }
-    else {
-        const [literal, vname] = u[0];
-        return subst(literal, vname, substitute(l, u.slice(1)));
+    return l;
+}
+
+/**
+ * This isn't really transitive closure.
+ * At least I'm pretty sure certain chains of variable->variable mappings
+ * will not result in all rhs variables being substituted with a term.
+ * But it works pretty well for the toy examples here!
+ */
+function closure(u: Substitution): Substitution {
+    for (const v in u) {
+        if (u[v].type === 'variable' && u[v].name in u) {
+            u[v] = u[u[v].name];
+        }
     }
+    return u;
 }
 
 export function parse(s: string): Literal {
