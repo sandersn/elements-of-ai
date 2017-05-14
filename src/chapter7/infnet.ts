@@ -1,18 +1,18 @@
+interface SingleArc {
+    kind: 'arc'
+    node: Node
+    sufficiency: number
+    necessity: number
+}
+interface CombinatorArc<T extends string> {
+    kind: T
+    arcs: Arc[]
+}
 export type Arc =
-    | {
-        kind: 'indep'
-        arcs: Arc[]
-    }
-    | {
-        kind: 'arc'
-        name: Node
-        sufficiency: number
-        necessity: number
-    }
-    | {
-        kind: 'and'
-        arcs: Arc[]
-    }
+    | SingleArc
+    | CombinatorArc<'indep'>
+    | CombinatorArc<'and'>
+    | CombinatorArc<'or'>
 function indep(...arcs: Arc[]): Arc {
     return { kind: 'indep', arcs }
 }
@@ -23,11 +23,22 @@ function and(...arcs: Arc[]): Arc {
     return { kind: 'and', arcs }
 }
 export class Node {
+    priorOdds: number
+    currentOdds: number
     constructor(public name: string,
                 public priorProb: number,
                 public currentProb: number,
                 public arc?: Arc) {
+        this.priorOdds = odds(priorProb)
+        this.currentOdds = odds(currentProb)
     }
+}
+
+function odds(prob: number) {
+    return prob / (1.0 - prob)
+}
+function prob(odds: number) {
+    return odds / (1 + odds)
 }
 
 // Primary Evidential Variables
@@ -106,5 +117,63 @@ const overallFoodQuality = new Node('overall-food-quality', 0.5, 0.5,
                                         arc(nutrition, 1.0, 0.3),
                                         arc(hygiene, 1.5, 0.2)))
 
-function updateProb(h: Node, arc: Arc): number {
+// section 1
+
+function updateProb(h: Node, arc: SingleArc): number {
+    if (arc.node.currentProb > arc.node.priorProb) {
+        reportProgress('supportive', h, arc)
+        return h.priorProb + (((prob(arc.sufficiency * h.priorOdds) - h.priorProb) /
+                               (1.0 - arc.node.priorProb)) *
+                              (arc.node.currentProb - arc.node.priorProb))
+    }
+    else {
+        reportProgress('inhibitive', h, arc)
+        return (prob(arc.necessity * h.priorOdds) +
+                (((h.priorProb - prob(arc.necessity * h.priorOdds)) /
+                  arc.node.priorProb) *
+                 arc.node.currentProb))
+    }
+}
+
+export var reporting = true
+
+function reportProgress(suppOrInhib: string, h: Node, arc: SingleArc) {
+    if (!reporting) {
+        return
+    }
+    console.log(`${suppOrInhib} Probability updating for node ${h.name}`)
+    console.log(`along arc:\n${arc.node.name} with prior odds ${h.priorOdds}`)
+    console.log(`Prior and current probs of E are ${arc.node.priorProb} and ${arc.node.currentProb}`)
+}
+
+// section 2
+function updateNode(node: Node) {
+    node.currentOdds = node.priorOdds * evalArcExp(node.arc)
+    node.currentProb = prob(node.currentOdds)
+    console.log(`Current probability of node ${node.name} is ${node.currentProb}`)
+
+    function evalArcExp(arc: Arc) {
+        switch (arc.kind) {
+            case 'arc':
+                return odds(updateProb(node, arc)) / node.priorOdds
+            case 'indep':
+                return arc.arcs.map(evalArcExp).reduce((l, r) => l * r)
+            case 'and':
+                return Math.min(...arc.arcs.map(evalArcExp))
+            case 'or':
+                return Math.max(...arc.arcs.map(evalArcExp))
+        }
+        throw new Error(`illegal arc ${arc}`)
+    }
+}
+function updateNodes(nodes: Node[]) {
+    nodes.forEach(updateNode)
+}
+
+// section 3
+export function test() {
+    updateNodes([popularity, elegance, artistry,
+                 cleanliness, taste, texture,
+                 appearance, quantity, correctness,
+                 nutrition, hygiene, overallFoodQuality])
 }
